@@ -1,3 +1,22 @@
+#
+# Utilities for the netops package
+#
+"""
+This module provides:
+
+Attributes
+----------
+__antelopeversion__ : version of antelope
+
+Classes
+-------
+CharPkt : Character packet class (version specific)
+
+Functions
+---------
+pfgetter : version agnostic pf loading fucntion
+
+"""
 import os
 
 __antelopeversion__ = os.environ['ANTELOPE'].split(os.path.sep)[-1]

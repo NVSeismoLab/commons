@@ -21,11 +21,8 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
 AUTH_ID = 'local'
 
 try:
-    from antelope.stock import pfget
+    from util import pfgetter
     pf = pfget('site')
-except ImportError:
-    from antelope.stock import pfread
-    pf = pfread('site')
 except Exception:
     pf = {}
 finally:
