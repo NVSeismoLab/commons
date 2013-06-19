@@ -3,7 +3,7 @@
 #
 from numpy import array
 import psycods2 as dbapi2
-from aug.contrib.orm import Connection, Relation
+import util
 from csseventconverter import CSSEventConverter
 from mt import mt2event
 from obspy.core.utcdatetime import UTCDateTime
@@ -16,11 +16,7 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     ResourceIdentifier, StationMagnitudeContribution)
 
 try:
-    from antelope.stock import pfget
-    pf = pfget('rt_quakeml')
-except ImportError:
-    from antelope.stock import pfread
-    pf = pfread('rt_quakeml')
+    pf = util.pfgetter('rt_quakeml')
 except Exception:
     pf = {}
 finally:
@@ -29,112 +25,10 @@ finally:
     AUTH_ID     = pf.get('authority', 'local')
     EMAP        = pf.get('etypes',{})
 
-def quakeml_rid(obj, authority=AUTH_ID):
-    """
-    Return a resource identifier for quakeml (for NSL)
-    
-    *** BASED ON NSL QuakeML CONVENTIONS! ***
-        - The creation_info.version attribute holds a unique number
-        - Only an Event holds the public site URL
-
-    Inputs
-    ------
-    obj : str or obspy.core.event class instance
-    url : Identifier to point toward an event
-    tag : Site-specific tag to ID data center
-
-    Returns
-    -------
-    obspy.core.event.ResourceIdentifier with 'resource_id' of:
-
-    if obj:
-    is an Event 
-        => use the URL provided and tack on EVID
-    is an event object (like a Pick, MomentTensor, etc)
-        => id is "quakeml:<tag>/<ClassName>/<creation_info.version>
-    is a string
-        => append the string to "quakeml:<tag>/"
-    
-    NOTES: Currently, a Magnitude is a special case, if there is no
-    magid, a Magnitude will get the orid as its version, which must
-    be combined with the magnitude type to produce a unique id.
-    
-    """
-    # Build up a list of strings to join for a valid RID string
-    if isinstance(obj, str):
-        l = ['quakeml:' + authority, obj]
-    elif isinstance(obj, Event):
-        evid = obj.creation_info.version
-        l = ['quakeml:'+ authority, 'Events/main.php?evid=' + evid]
-    else:
-        prefix = 'quakeml:'+ authority
-        name   = obj.__class__.__name__
-        id_num = obj.creation_info.version
-        l = [prefix, name, id_num]
-    # In case of multiple magnitudes, make Mag unique with type
-    if isinstance(obj, Magnitude):
-        l.insert(2, obj.magnitude_type)
-        
-    ridstr = '/'.join(l)
-    return ResourceIdentifier(ridstr)
-
-def quakeml_anss_attrib(evid=None, agency=AGENCY_CODE.lower() ):
-    """
-    Returns stuff necessary for quakeml files
-    
-    These things are specific to a datacenter, in an effort to generalize
-    the actual writer function as much as possible.
-    
-    Input
-    -----
-    evid   : int of some event identifier to name the file 
-    agency : str of name or code of agency creating file (netcode)
-    
-    Returns : dict of NSL specific stuff.
-    """
-    if evid:
-        anss_id = '{0:08d}'.format(evid)
-    else:
-        anss_id = '00000000'
-    return {'datasource' : agency, 'dataid' : anss_id, 'eventsource' : agency, 'eventid' : anss_id}
-
-def quakeml_filename(event, product):
-    return event.extra['eventsource']['value']+event.extra['eventid']['value']+'_'+product+'.xml'
 
 ### Utility functions ########################################################
 # May be moved to a more generic module in the future (+remove numpy depend)
-def azimuth2compass(azimuth):
-    """
-    Return 1 of 8 compass directions from an azimuth in degrees from N
-    
-    Inputs
-    ------
-    azimuth : float in range (0., 360.)
-    
-    Returns : str of WESN compass direction
-    """
-    needle = None
-    if azimuth < 22.5:
-        needle = 'N'
-    elif azimuth < 67.5:
-        needle = 'NE'
-    elif azimuth < 112.5:
-        needle = 'E'
-    elif azimuth < 157.5:
-        needle = 'SE'
-    elif azimuth < 202.5:
-        needle = 'S'
-    elif azimuth < 247.5:
-        needle = 'SW'
-    elif azimuth < 292.5:
-        needle = 'W'
-    elif azimuth < 337.5:
-        needle = 'NW'
-    else:
-        needle = 'N'
-    return needle
-
-def get_nearest_event_description(latitude, longitude, database=PLACE_DB):
+def get_nearest_city(latitude, longitude, database=PLACE_DB):
     """
     Get the nearest place to a lat/lon from a db with a 'places' table
 
@@ -158,11 +52,10 @@ def get_nearest_event_description(latitude, longitude, database=PLACE_DB):
         curs.scroll(int(ind), 'absolute')
         minrec = curs.fetchone()
         dist, azi, backazi = minstats
-        compass = azimuth2compass(backazi)
+        compass = util.azimuth2compass(backazi)
         place_info = {'distance': dist/1000., 'direction': compass, 'city': minrec.place, 'state': minrec.state}
         dbc.close()
-        nearest_city_string = "{distance:0.1f} km {direction} of {city}, {state}".format(**place_info)
-        return EventDescription(nearest_city_string, "nearest cities")
+        return  "{distance:0.1f} km {direction} of {city}, {state}".format(**place_info)
 
 
 class NSLEventBuilder(CSSEventConverter):
@@ -176,10 +69,90 @@ class NSLEventBuilder(CSSEventConverter):
 
     """
     auth_id = AUTH_ID
+    agency = AGENCY_CODE
 
+    @staticmethod
+    def quakeml_rid(obj, authority):
+        """
+        Return a resource identifier for quakeml (for NSL)
+        
+        *** BASED ON NSL QuakeML CONVENTIONS! ***
+            - The creation_info.version attribute holds a unique number
+            - Only an Event holds the public site URL
+
+        Inputs
+        ------
+        obj : str or obspy.core.event class instance
+        url : Identifier to point toward an event
+        tag : Site-specific tag to ID data center
+
+        Returns
+        -------
+        obspy.core.event.ResourceIdentifier with 'resource_id' of:
+
+        if obj:
+        is an Event 
+            => use the URL provided and tack on EVID
+        is an event object (like a Pick, MomentTensor, etc)
+            => id is "quakeml:<tag>/<ClassName>/<creation_info.version>
+        is a string
+            => append the string to "quakeml:<tag>/"
+        
+        NOTES: Currently, a Magnitude is a special case, if there is no
+        magid, a Magnitude will get the orid as its version, which must
+        be combined with the magnitude type to produce a unique id.
+        
+        """
+        # Build up a list of strings to join for a valid RID string
+        if isinstance(obj, str):
+            l = ['quakeml:' + authority, obj]
+        elif isinstance(obj, Event):
+            evid = obj.creation_info.version
+            l = ['quakeml:'+ authority, 'Events/main.php?evid=' + evid]
+        else:
+            prefix = 'quakeml:'+ authority
+            name   = obj.__class__.__name__
+            id_num = obj.creation_info.version
+            l = [prefix, name, id_num]
+        # In case of multiple magnitudes, make Mag unique with type
+        if isinstance(obj, Magnitude):
+            l.insert(2, obj.magnitude_type)
+            
+        ridstr = '/'.join(l)
+        return ResourceIdentifier(ridstr)
+
+   
+    @staticmethod
+    def quakeml_anss_attrib(evid=None, agency_code=None):
+        """
+        Returns stuff necessary for quakeml files
+        
+        These things are specific to a datacenter, in an effort to generalize
+        the actual writer function as much as possible.
+        
+        Input
+        -----
+        evid   : int of some event identifier to name the file 
+        agency : str of name or code of agency creating file (netcode)
+        
+        Returns : dict of NSL specific stuff.
+        """
+        if evid:
+            anss_id = '{0:08d}'.format(evid)
+        else:
+            anss_id = '00000000'
+        return {'datasource' : agency_code, 'dataid' : anss_id, 'eventsource' : agency_code, 'eventid' : anss_id}
+    
+    def quakeml_filename(self, product):
+        return self.event.extra['eventsource']['value'] + self.event.extra['eventid']['value'] + '_' + product + '.xml'
+    
+    def get_nearest_event_description(self, latitude, longitude):
+        nearest_city_string = get_nearest_city(latitude, longitude)
+        return EventDescription(nearest_city_string, "nearest cities")
+    
     # Use a custom RID generator function
     def _rid(self, obj):
-        return quakeml_rid(obj)
+        return self.quakeml_rid(obj, self.auth_id)
 
     def build(self, evid=None, orid=None, delete=False, phase_data=False, focal_data=False, mt=None):
         """
@@ -223,10 +196,10 @@ class NSLEventBuilder(CSSEventConverter):
         prefor = self.event.preferred_origin()
         if prefor is not None:
             self.event.event_type = self.origin_event_type(prefor, emap=EMAP)
-            ed = get_nearest_event_description(prefor.latitude, prefor.longitude)
+            ed = self.get_nearest_event_description(prefor.latitude, prefor.longitude)
             self.event.event_descriptions = [ed]
         # Generate NSL namespace attributes
-        extra_attributes = quakeml_anss_attrib(evid)
+        extra_attributes = self.quakeml_anss_attrib(evid, AGENCY_CODE.lower())
         self.event.extra = self.extra_anss(**extra_attributes)
 
 

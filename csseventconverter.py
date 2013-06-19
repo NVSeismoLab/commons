@@ -10,6 +10,7 @@
 # Packages     'psycods2' DBAPI2.0 implementation for Datascope
 #
 import psycods2 as dbapi2
+from netops.quakeml import Pickler
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     EventDescription, OriginUncertainty, OriginQuality, CompositeTime,
@@ -107,7 +108,7 @@ class CSSEventConverter(dbapi2.Connection):
         >>> eb.event = my_event
 
         """
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(CSSEventConverter, self).__init__(*args, **kwargs)
         self.row_factory = dbapi2.OrderedDictRow
         self.event = Event()
     
