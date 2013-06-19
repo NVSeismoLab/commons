@@ -114,6 +114,13 @@ class CharPkt(Pkt):
 
         if self.type != Pkt_ch:
             raise ValueError("Not a character packet! Check suffix/type...")
+    
+    def get_subcode(self):
+        """
+        Subcode access
+
+        """
+        return self.srcnameparts['subcode']
 
     def separate(self):
         """
@@ -121,7 +128,7 @@ class CharPkt(Pkt):
 
         """
         return self.string.split(self.separator)
-
+    
     def unpickle(self):
         """
         Return a dictionary of character packet content if subcode is recognized.

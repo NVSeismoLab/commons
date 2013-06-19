@@ -113,6 +113,12 @@ class CharPacket(Packet):
         if self.type_suffix != 'ch':
             raise ValueError("Not a character packet! Check suffix/type...")
 
+    def get_subcode(self):
+        """
+        Subcode access
+        """
+        return self.srcname.subcode
+
     def separate(self):
         """
         Returns list of strings broken by a separator

@@ -1,10 +1,10 @@
 #
 # Custom site fuctions for the Nevada Seismological Laboratory
 #
-from antelope.stock import pfget
-from aug.contrib.orm import Connection, Relation
 from numpy import array
-from eventbuilder import EventBuilder, extra_anss, origin_event_type
+import psycods2 as dbapi2
+from aug.contrib.orm import Connection, Relation
+from csseventconverter import CSSEventConverter
 from mt import mt2event
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.util import gps2DistAzimuth
@@ -16,8 +16,12 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     ResourceIdentifier, StationMagnitudeContribution)
 
 try:
+    from antelope.stock import pfget
     pf = pfget('rt_quakeml')
-except:
+except ImportError:
+    from antelope.stock import pfread
+    pf = pfread('rt_quakeml')
+except Exception:
     pf = {}
 finally:
     AGENCY_CODE = pf.get('AGENCY_CODE', 'XX') 
@@ -146,12 +150,13 @@ def get_nearest_event_description(latitude, longitude, database=PLACE_DB):
     if database is None:
         return None
     else:
-        dbc = Connection(database, table='places')
-        rel = dbc.relation
-        stats = array([gps2DistAzimuth(latitude, longitude, r.lat, r.lon) for r in rel])
+        dbc = dbapi2.Connection(database)
+        curs = dbc.cursor(table='places', row_factory=dbapi2.NamedTupleRow)
+        stats = array([gps2DistAzimuth(latitude, longitude, r.lat, r.lon) for r in curs])
         ind = stats.argmin(0)[0]
         minstats = stats[ind]
-        minrec = rel[int(ind)]
+        curs.scroll(int(ind), 'absolute')
+        minrec = curs.fetchone()
         dist, azi, backazi = minstats
         compass = azimuth2compass(backazi)
         place_info = {'distance': dist/1000., 'direction': compass, 'city': minrec.place, 'state': minrec.state}
@@ -160,7 +165,7 @@ def get_nearest_event_description(latitude, longitude, database=PLACE_DB):
         return EventDescription(nearest_city_string, "nearest cities")
 
 
-class NSLEventBuilder(EventBuilder):
+class NSLEventBuilder(CSSEventConverter):
     """
     EventBuilder that does custom addons for NSL
     
@@ -217,12 +222,12 @@ class NSLEventBuilder(EventBuilder):
         # Add a nearest event string, try to set event type with custom etype additions
         prefor = self.event.preferred_origin()
         if prefor is not None:
-            self.event.event_type = origin_event_type(prefor, emap=EMAP)
+            self.event.event_type = self.origin_event_type(prefor, emap=EMAP)
             ed = get_nearest_event_description(prefor.latitude, prefor.longitude)
             self.event.event_descriptions = [ed]
         # Generate NSL namespace attributes
         extra_attributes = quakeml_anss_attrib(evid)
-        self.event.extra = extra_anss(**extra_attributes)
+        self.event.extra = self.extra_anss(**extra_attributes)
 
 
 #--- Class as function -------------------------------------------------------
