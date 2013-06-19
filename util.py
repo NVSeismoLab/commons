@@ -6,15 +6,15 @@ This module provides:
 
 Attributes
 ----------
-__antelopeversion__ : version of antelope
+__antelopeversion__ : version of antelope currently sourced
 
 Classes
 -------
-CharPkt : Character packet class (version specific)
+CharPkt : Antelope version agnostic-ish NSL Character packet class
 
 Functions
 ---------
-pfgetter : version agnostic pf loading fucntion
+pfgetter : Antelope version agnostic pf loading fucntion
 aximuth2compass : get letter compass direction from a 0-360
 
 """
