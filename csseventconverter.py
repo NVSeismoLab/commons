@@ -22,7 +22,7 @@ AUTH_ID = 'local'
 
 try:
     from util import pfgetter
-    pf = pfget('site')
+    pf = pfgetter('site')
 except Exception:
     pf = {}
 finally:
