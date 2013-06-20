@@ -38,7 +38,7 @@ def get_nearest_city(latitude, longitude, database=PLACE_DB):
     latitude  : float of latitude
     longitude : float of longitude
     
-    Returns : obspy.core.event.EventDescription, type="nearest cities"
+    Returns : string of the distance and compass azimuth to a place
 
     """
     if database is None:
