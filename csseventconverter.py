@@ -9,7 +9,7 @@
 # Required     'obspy'    ObsPy (version with event, quakeml support)
 # Packages     'psycods2' DBAPI2.0 implementation for Datascope
 #
-import psycods2 as dbapi2
+import psycods2 as dbapi2 # change to curds2
 from quakeml import Pickler
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,

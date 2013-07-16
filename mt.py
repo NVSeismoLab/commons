@@ -12,7 +12,7 @@
 #
 import re, sys
 from obspy.core.utcdatetime import UTCDateTime
-from antelope.stock import pfget
+from util import pfgetter
 from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     EventDescription, OriginUncertainty, OriginQuality, CompositeTime,
     ConfidenceEllipsoid, StationMagnitude, Comment, WaveformStreamID, Pick,
@@ -21,7 +21,7 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     ResourceIdentifier, StationMagnitudeContribution)
 
 try:
-    pf = pfget('rt_quakeml')
+    pf = pfgetter('rt_quakeml')
 except:
     pf = {}
 finally:

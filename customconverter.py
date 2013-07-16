@@ -58,7 +58,7 @@ def get_nearest_city(latitude, longitude, database=PLACE_DB):
         return  "{distance:0.1f} km {direction} of {city}, {state}".format(**place_info)
 
 
-class NSLEventBuilder(CSSEventConverter):
+class CustomConverter(CSSEventConverter):
     """
     EventBuilder that does custom addons for NSL
     
@@ -217,7 +217,7 @@ def build_event(database, *args, **kwargs):
     Returns : obspy.core.event.Event instance
     
     """
-    dbc = NSLEventBuilder(database)
+    dbc = CustomConverter(database)
     dbc.build(*args, **kwargs)
     dbc.close()
     return dbc.event
