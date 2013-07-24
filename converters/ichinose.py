@@ -10,9 +10,8 @@
 # Parser -> class which holds text and methods
 #            to extract certain values of the mt inversion
 #
-import re, sys
+import re
 from obspy.core.utcdatetime import UTCDateTime
-from util import pfgetter
 from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     EventDescription, OriginUncertainty, OriginQuality, CompositeTime,
     ConfidenceEllipsoid, StationMagnitude, Comment, WaveformStreamID, Pick,
@@ -20,65 +19,9 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     PrincipalAxes, Axis, NodalPlane, SourceTimeFunction, Tensor, DataUsed,
     ResourceIdentifier, StationMagnitudeContribution)
 
-try:
-    pf = pfgetter('rt_quakeml')
-except:
-    pf = {}
-finally:
-    AGENCY_CODE = pf.get('AGENCY_CODE', 'XX') 
-    PLACE_DB    = pf.get('PLACE_DB', None)
-    AUTH_ID     = pf.get('authority', 'local')
-    EMAP        = pf.get('etypes',{})
 
-def quakeml_rid(obj, authority=AUTH_ID):
-    """
-    Return a resource identifier for quakeml (for NSL)
-    
-    *** BASED ON NSL QuakeML CONVENTIONS! ***
-        - The creation_info.version attribute holds a unique number
-        - Only an Event holds the public site URL
-
-    Inputs
-    ------
-    obj : str or obspy.core.event class instance
-    url : Identifier to point toward an event
-    tag : Site-specific tag to ID data center
-
-    Returns
-    -------
-    obspy.core.event.ResourceIdentifier with 'resource_id' of:
-
-    if obj:
-    is an Event 
-        => use the URL provided and tack on EVID
-    is an event object (like a Pick, MomentTensor, etc)
-        => id is "quakeml:<tag>/<ClassName>/<creation_info.version>
-    is a string
-        => append the string to "quakeml:<tag>/"
-    
-    NOTES: Currently, a Magnitude is a special case, if there is no
-    magid, a Magnitude will get the orid as its version, which must
-    be combined with the magnitude type to produce a unique id.
-    
-    """
-    # Build up a list of strings to join for a valid RID string
-    if isinstance(obj, str):
-        l = ['quakeml:' + authority, obj]
-    elif isinstance(obj, Event):
-        evid = obj.creation_info.version
-        l = ['quakeml:'+ authority, 'Events/main.php?evid=' + evid]
-    else:
-        prefix = 'quakeml:'+ authority
-        name   = obj.__class__.__name__
-        id_num = obj.creation_info.version
-        l = [prefix, name, id_num]
-    # In case of multiple magnitudes, make Mag unique with type
-    if isinstance(obj, Magnitude):
-        l.insert(2, obj.magnitude_type)
-        
-    ridstr = '/'.join(l)
-    return ResourceIdentifier(ridstr)
-
+def rid(obj):
+    return ResourceIdentifier(prefix='smi:local')
 
 class Parser(object):
     '''
@@ -224,7 +167,7 @@ class Parser(object):
         '''
         pass
 
-def mt2event(filehandle):
+def mt2event(filehandle, quakeml_rid=rid):
     '''Build an obspy moment tensor focal mech event
 
     This makes the tensor output into an Event containing:
@@ -341,4 +284,66 @@ def mt2event(filehandle):
         event.creation_info.version = evid
     event.resource_id = quakeml_rid(event)
     return event
+
+
+#from util import pfgetter
+
+#try:
+#    pf = pfgetter('rt_quakeml')
+#except:
+#    pf = {}
+#finally:
+#    AGENCY_CODE = pf.get('AGENCY_CODE', 'XX') 
+#    PLACE_DB    = pf.get('PLACE_DB', None)
+#    AUTH_ID     = pf.get('authority', 'local')
+#    EMAP        = pf.get('etypes',{})
+#
+#def ord_quakeml_rid(obj, authority=AUTH_ID):
+#    """
+#    Return a resource identifier for quakeml (for NSL)
+#    
+#    *** BASED ON NSL QuakeML CONVENTIONS! ***
+#        - The creation_info.version attribute holds a unique number
+#        - Only an Event holds the public site URL
+#
+#    Inputs
+#    ------
+#    obj : str or obspy.core.event class instance
+#    url : Identifier to point toward an event
+#    tag : Site-specific tag to ID data center
+#
+#    Returns
+#    -------
+#    obspy.core.event.ResourceIdentifier with 'resource_id' of:
+#
+#    if obj:
+#    is an Event 
+#        => use the URL provided and tack on EVID
+#    is an event object (like a Pick, MomentTensor, etc)
+#        => id is "quakeml:<tag>/<ClassName>/<creation_info.version>
+#    is a string
+#        => append the string to "quakeml:<tag>/"
+#    
+#    NOTES: Currently, a Magnitude is a special case, if there is no
+#    magid, a Magnitude will get the orid as its version, which must
+#    be combined with the magnitude type to produce a unique id.
+#    
+#    """
+#    # Build up a list of strings to join for a valid RID string
+#    if isinstance(obj, str):
+#        l = ['quakeml:' + authority, obj]
+#    elif isinstance(obj, Event):
+#        evid = obj.creation_info.version
+#        l = ['quakeml:'+ authority, 'Events/main.php?evid=' + evid]
+#    else:
+#        prefix = 'quakeml:'+ authority
+#        name   = obj.__class__.__name__
+#        id_num = obj.creation_info.version
+#        l = [prefix, name, id_num]
+#    # In case of multiple magnitudes, make Mag unique with type
+#    if isinstance(obj, Magnitude):
+#        l.insert(2, obj.magnitude_type)
+#        
+#    ridstr = '/'.join(l)
+#    return ResourceIdentifier(ridstr)
 

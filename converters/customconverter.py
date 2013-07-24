@@ -2,10 +2,10 @@
 # Custom site fuctions for the Nevada Seismological Laboratory
 #
 from numpy import array
-import psycods2 as dbapi2
-import util
-from csseventconverter import CSSEventConverter
-from mt import mt2event
+import curds2 as dbapi2
+from ..util import pfgetter, azimuth2compass
+from antelopeconverter import AntelopeEventConverter
+from ichinose import mt2event
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.util import gps2DistAzimuth
 from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
@@ -16,7 +16,7 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     ResourceIdentifier, StationMagnitudeContribution)
 
 try:
-    pf = util.pfgetter('rt_quakeml')
+    pf = pfgetter('rt_quakeml')
 except Exception:
     pf = {}
 finally:
@@ -24,7 +24,7 @@ finally:
     PLACE_DB    = pf.get('PLACE_DB', None)
     AUTH_ID     = pf.get('authority', 'local')
     EMAP        = pf.get('etypes',{})
-
+    del pf
 
 ### Utility functions ########################################################
 # May be moved to a more generic module in the future (+remove numpy depend)
@@ -44,21 +44,21 @@ def get_nearest_city(latitude, longitude, database=PLACE_DB):
     if database is None:
         return None
     else:
-        dbc = dbapi2.Connection(database)
-        curs = dbc.cursor(table='places', row_factory=dbapi2.NamedTupleRow)
+        curs = dbapi2.connect(database).cursor(row_factory=dbapi2.NamedTupleRow)
+        nrecs = curs.execute.lookup(table='places')
         stats = array([gps2DistAzimuth(latitude, longitude, r.lat, r.lon) for r in curs])
         ind = stats.argmin(0)[0]
         minstats = stats[ind]
         curs.scroll(int(ind), 'absolute')
         minrec = curs.fetchone()
         dist, azi, backazi = minstats
-        compass = util.azimuth2compass(backazi)
+        compass = azimuth2compass(backazi)
         place_info = {'distance': dist/1000., 'direction': compass, 'city': minrec.place, 'state': minrec.state}
-        dbc.close()
+        curs.close()
         return  "{distance:0.1f} km {direction} of {city}, {state}".format(**place_info)
 
 
-class CustomConverter(CSSEventConverter):
+class NSLQuakemlConverter(AntelopeEventConverter):
     """
     EventBuilder that does custom addons for NSL
     
@@ -122,8 +122,7 @@ class CustomConverter(CSSEventConverter):
         return ResourceIdentifier(ridstr)
 
    
-    @staticmethod
-    def quakeml_anss_attrib(evid=None, agency_code=None):
+    def quakeml_anss_attrib(self, evid=None):
         """
         Returns stuff necessary for quakeml files
         
@@ -137,6 +136,7 @@ class CustomConverter(CSSEventConverter):
         
         Returns : dict of NSL specific stuff.
         """
+        agency_code = self.agency.lower()
         if evid:
             anss_id = '{0:08d}'.format(evid)
         else:
@@ -185,7 +185,7 @@ class CustomConverter(CSSEventConverter):
         else:
         # 2. Make a custom event (mt is a special-formatted text file)
             if mt:
-                self.event = mt2event(mt)
+                self.event = mt2event(mt, quakeml_rid=self.quakeml_rid)
         # 3. Use EventBuilder to get Event from the db
             else:
                 self._build(orid=orid, phases=phase_data, focals=focal_data, event_type="not reported")
@@ -199,7 +199,7 @@ class CustomConverter(CSSEventConverter):
             ed = self.get_nearest_event_description(prefor.latitude, prefor.longitude)
             self.event.event_descriptions = [ed]
         # Generate NSL namespace attributes
-        extra_attributes = self.quakeml_anss_attrib(evid, AGENCY_CODE.lower())
+        extra_attributes = self.quakeml_anss_attrib(evid)
         self.event.extra = self.extra_anss(**extra_attributes)
 
 
@@ -217,8 +217,8 @@ def build_event(database, *args, **kwargs):
     Returns : obspy.core.event.Event instance
     
     """
-    dbc = CustomConverter(database)
+    dbc = NSLQuakemlConverter(database)
     dbc.build(*args, **kwargs)
-    dbc.close()
+    dbc.connection.close()
     return dbc.event
 
