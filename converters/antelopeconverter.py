@@ -1,16 +1,54 @@
 #    
+"""
+This module contains a class with methods to produce an 
+obspy.core.event.Event object from an Antelope database
+
+It inherits from the CSSEventConverter, and uses the
+private conversion methods to map CSS to QuakeML.
+
+The "get_*" methods contain Antelope-specific database
+commands to get the data out of your db tables.
+
+Classes
+=======
+
+AntelopeEventConverter(database, perm, *args, **kwargs)
+
+
+"""
+from numpy import array
+from obspy.core.util import gps2DistAzimuth
+from curds2 import connect, OrderedDictRow, NamedTupleRow
 from csseventconverter import CSSEventConverter
-from curds2 import connect, OrderedDictRow
+from ..util import azimuth2compass
+
 
 class AntelopeEventConverter(CSSEventConverter):
     """
     Extracts data in CSS schema from Antelope Datascope database
     and converts to (QuakeML) schema ObsPy Event.
     
+    Methods
+    -------
+    get_origins    : return list of Origins from db
+    get_magnitudes : return list of Magnitudes from db
+    get_phases     : return lists of Pick/Arrivals from db
+    get_focalmechs : return list of FocalMechanisms from db
+    
+    Notes
+    -----
+    The four main 'get' methods (origin, mag, focalmech, and phases) contain
+    the esoteric database calls. They then use the inherited methods from
+    CSSEventConverter to create an obspy.core.event.Event from the
+    database data.
+    
     """
 
     def __init__(self, database, perm='r', *args, **kwargs):
-        
+        """
+        Initialize converter and connect to database
+
+        """
         super(AntelopeEventConverter, self).__init__(*args, **kwargs)
         self.connection = connect(database, perm, row_factory=OrderedDictRow)
         self.connection.CONVERT_NULL = True
@@ -31,6 +69,36 @@ class AntelopeEventConverter(CSSEventConverter):
         curs.scroll(n, 'absolute')
         db = curs.fetchone()
         return db['evid']
+    
+    @staticmethod
+    def get_nearest_city(latitude, longitude, database=None):
+        """
+        Get the nearest place to a lat/lon from a db with a 'places' table
+
+        Inputs
+        ------
+        database  : str of database with 'places' table
+        latitude  : float of latitude
+        longitude : float of longitude
+        
+        Returns : string of the distance and compass azimuth to a place
+
+        """
+        if database is None:
+            return None
+        else:
+            curs = connect(database).cursor(row_factory=NamedTupleRow)
+            nrecs = curs.execute.lookup(table='places')
+            stats = array([gps2DistAzimuth(latitude, longitude, r.lat, r.lon) for r in curs])
+            ind = stats.argmin(0)[0]
+            minstats = stats[ind]
+            curs.scroll(int(ind), 'absolute')
+            minrec = curs.fetchone()
+            dist, azi, backazi = minstats
+            compass = azimuth2compass(backazi)
+            place_info = {'distance': dist/1000., 'direction': compass, 'city': minrec.place, 'state': minrec.state}
+            curs.close()
+            return  "{distance:0.1f} km {direction} of {city}, {state}".format(**place_info)
     
     def get_focalmechs(self, orid=None):
         cmd = ['dbopen fplane', 'dbsubset orid=={0}'.format(orid)]
