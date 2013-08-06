@@ -4,5 +4,5 @@
 import quakeml
 from csseventconverter import CSSEventConverter
 from antelopeconverter import AntelopeEventConverter
-from customconverter import NSLQuakemlConverter
+from customconverter   import CustomEventConverter
 

@@ -1,13 +1,9 @@
 #
 # Custom site fuctions for the Nevada Seismological Laboratory
 #
-from numpy import array
-import curds2 as dbapi2
-from ..util import pfgetter, azimuth2compass
 from antelopeconverter import AntelopeEventConverter
 from ichinose import mt2event
 from obspy.core.utcdatetime import UTCDateTime
-from obspy.core.util import gps2DistAzimuth
 from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     EventDescription, OriginUncertainty, OriginQuality, CompositeTime,
     ConfidenceEllipsoid, StationMagnitude, Comment, WaveformStreamID, Pick,
@@ -15,6 +11,7 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     PrincipalAxes, Axis, NodalPlane, SourceTimeFunction, Tensor, DataUsed,
     ResourceIdentifier, StationMagnitudeContribution)
 
+from ..util import pfgetter
 try:
     pf = pfgetter('rt_quakeml')
 except Exception:
@@ -26,39 +23,8 @@ finally:
     EMAP        = pf.get('etypes',{})
     del pf
 
-### Utility functions ########################################################
-# May be moved to a more generic module in the future (+remove numpy depend)
-def get_nearest_city(latitude, longitude, database=PLACE_DB):
-    """
-    Get the nearest place to a lat/lon from a db with a 'places' table
 
-    Inputs
-    ------
-    database  : str of database with 'places' table
-    latitude  : float of latitude
-    longitude : float of longitude
-    
-    Returns : string of the distance and compass azimuth to a place
-
-    """
-    if database is None:
-        return None
-    else:
-        curs = dbapi2.connect(database).cursor(row_factory=dbapi2.NamedTupleRow)
-        nrecs = curs.execute.lookup(table='places')
-        stats = array([gps2DistAzimuth(latitude, longitude, r.lat, r.lon) for r in curs])
-        ind = stats.argmin(0)[0]
-        minstats = stats[ind]
-        curs.scroll(int(ind), 'absolute')
-        minrec = curs.fetchone()
-        dist, azi, backazi = minstats
-        compass = azimuth2compass(backazi)
-        place_info = {'distance': dist/1000., 'direction': compass, 'city': minrec.place, 'state': minrec.state}
-        curs.close()
-        return  "{distance:0.1f} km {direction} of {city}, {state}".format(**place_info)
-
-
-class NSLQuakemlConverter(AntelopeEventConverter):
+class CustomEventConverter(AntelopeEventConverter):
     """
     EventBuilder that does custom addons for NSL
     
@@ -68,23 +34,22 @@ class NSLQuakemlConverter(AntelopeEventConverter):
     build(self, evid=None, orid=None, delete=False, phase_data=False, focal_data=False, mt=None):
 
     """
-    auth_id = AUTH_ID
-    agency = AGENCY_CODE
+    auth_id  = AUTH_ID
+    agency   = AGENCY_CODE
+    place_db = PLACE_DB
+    emap     = EMAP
 
     @staticmethod
     def quakeml_rid(obj, authority):
         """
         Return a resource identifier for quakeml (for NSL)
         
-        *** BASED ON NSL QuakeML CONVENTIONS! ***
-            - The creation_info.version attribute holds a unique number
-            - Only an Event holds the public site URL
-
         Inputs
         ------
         obj : str or obspy.core.event class instance
         url : Identifier to point toward an event
         tag : Site-specific tag to ID data center
+
 
         Returns
         -------
@@ -98,6 +63,7 @@ class NSLQuakemlConverter(AntelopeEventConverter):
         is a string
             => append the string to "quakeml:<tag>/"
         
+
         NOTES: Currently, a Magnitude is a special case, if there is no
         magid, a Magnitude will get the orid as its version, which must
         be combined with the magnitude type to produce a unique id.
@@ -121,7 +87,6 @@ class NSLQuakemlConverter(AntelopeEventConverter):
         ridstr = '/'.join(l)
         return ResourceIdentifier(ridstr)
 
-   
     def quakeml_anss_attrib(self, evid=None):
         """
         Returns stuff necessary for quakeml files
@@ -147,7 +112,7 @@ class NSLQuakemlConverter(AntelopeEventConverter):
         return self.event.extra['eventsource']['value'] + self.event.extra['eventid']['value'] + '_' + product + '.xml'
     
     def get_nearest_event_description(self, latitude, longitude):
-        nearest_city_string = get_nearest_city(latitude, longitude)
+        nearest_city_string = self.get_nearest_city(latitude, longitude, database=self.place_db)
         return EventDescription(nearest_city_string, "nearest cities")
     
     # Use a custom RID generator function
@@ -195,7 +160,7 @@ class NSLQuakemlConverter(AntelopeEventConverter):
         # Add a nearest event string, try to set event type with custom etype additions
         prefor = self.event.preferred_origin()
         if prefor is not None:
-            self.event.event_type = self.origin_event_type(prefor, emap=EMAP)
+            self.event.event_type = self.origin_event_type(prefor, emap=self.emap)
             ed = self.get_nearest_event_description(prefor.latitude, prefor.longitude)
             self.event.event_descriptions = [ed]
         # Generate NSL namespace attributes
@@ -217,7 +182,7 @@ def build_event(database, *args, **kwargs):
     Returns : obspy.core.event.Event instance
     
     """
-    dbc = NSLQuakemlConverter(database)
+    dbc = CustomEventConverter(database)
     dbc.build(*args, **kwargs)
     dbc.connection.close()
     return dbc.event

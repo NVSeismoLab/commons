@@ -1,4 +1,5 @@
 #
+"""
 # csseventconverter.py 
 # by Mark
 # 2013-2-13
@@ -7,7 +8,14 @@
 # (obspy Event class which can write QuakeML XML)
 #
 # Required     'obspy'    ObsPy (version with event, quakeml support)
-#
+
+Classes
+=======
+
+CSSEventConverter : methods to convert CSS to QuakeML schema
+
+
+"""
 from quakeml import Pickler
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
@@ -48,25 +56,10 @@ class CSSEventConverter(object):
 
     Methods
     -------
-    get_origins    : return list of Origins from db
-    get_magnitudes : return list of Magnitudes from db
-    get_phases     : return lists of Pick/Arrivals from db
-    get_focalmechs : return list of FocalMechanisms from db
     build          : build an Event given some parameters (ORID)
     quakeml_str    : write the current Event out as QuakeML
     extra_anss     : return properly formatted 'extra' dict for ANSS QuakeML
     get_event_type : static class method to convert CSS origin type flag
-
-    Notes
-    -----
-    The four main 'get' methods (origin, mag, focalmech, and phases) contain
-    the esoteric database calls. All other methods use standard Python 
-    iterators, generators, and dict-like key access to fields, and are 
-    abstracted through the DBAPI standard interface. This should make the
-    schema translator functions fairly portable. To that end...
-    
-    Future implementations of this class will most likely work with additional
-    database backends, and only depend on the standardish CSS3.0 schema.
 
     """
     connection = None # DBAPI2 database connection
