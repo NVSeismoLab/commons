@@ -1,7 +1,7 @@
 #
 """
 # csseventconverter.py 
-# by Mark
+# -by Mark C. Williams (2013), Nevada Seismological Laboratory
 # 2013-2-13
 #
 # functions to map CSS3.0 to QuakeML schema

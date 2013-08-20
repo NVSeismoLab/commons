@@ -1,6 +1,19 @@
 #
-# Custom site fuctions for the Nevada Seismological Laboratory
-#
+"""
+customconverter.py 
+ -by Mark C. Williams (2013), Nevada Seismological Laboratory
+
+Custom site functions for the Nevada Seismological Laboratory:
+This CustomEventConverter class inherits from AntelopeEventConverter,
+and generates Event objects (which then convert to QuakeML) with settings
+appropriate for the Nevada Seismic Network Data Center in Reno, NV.
+
+For now, this class needs to be customized for a particular DC, in the
+future, it MAY be possible to abstract more of these esoteric settings
+to a config file, but some things, (like NSL's custom MT results) need
+to be implemented in code for now.
+
+"""
 from antelopeconverter import AntelopeEventConverter
 from ichinose import mt2event
 from obspy.core.utcdatetime import UTCDateTime

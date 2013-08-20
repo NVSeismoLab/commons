@@ -1,5 +1,8 @@
 #    
 """
+antelopeconverter.py 
+ -by Mark C. Williams (2013), Nevada Seismological Laboratory
+
 This module contains a class with methods to produce an 
 obspy.core.event.Event object from an Antelope database
 

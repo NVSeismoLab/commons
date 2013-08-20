@@ -2,6 +2,10 @@
 # Utilities for the netops package
 #
 """
+util.py
+-by Mark C. Williams, (2013) Nevada Seismological Laboratory
+Utilities for the Network Operations python package
+
 This module provides:
 
 Attributes

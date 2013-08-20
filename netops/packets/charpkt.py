@@ -1,6 +1,14 @@
 #
 # Utilities for making character packets for our status ORBS
 #
+"""
+charpkt.py
+-by Mark C. Williams (2013) Nevada Seismological Laboratory
+
+Character packet class used by NSL for message passing in ORBs
+(Current production version)
+
+"""
 
 from antelope.Pkt import Pkt, suffix2pkttype, Pkt_ch
 #
