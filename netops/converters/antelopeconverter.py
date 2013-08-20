@@ -64,7 +64,8 @@ class AntelopeEventConverter(CSSEventConverter):
         Returns : int of evid
 
         """
-        curs = self.connection.cursor(table='origin')
+        curs = self.connection.cursor()
+        nrecs = curs.execute.lookup(table='origin')
         n = curs.execute('find', ['orid=={0}'.format(orid)] )
         curs.scroll(n, 'absolute')
         db = curs.fetchone()

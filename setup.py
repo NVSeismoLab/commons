@@ -7,10 +7,10 @@ from numpy.distutils.core import setup
 
 s_args = {'name'         : 'netops',
           'version'      : '0.1.0',
-          'description'  : 'Seismic Network Operations utilities',
+          'description'  : 'Network Operations utilities',
           'author'       : 'Nevada Seismological Lab',
           'url'          : 'https//github.com/NVSeismoLab',
-          'packages'     : ['netops', 'netops.converters', 'netops.packets'],
+          'packages'     : ['netops', 'netops.converters', 'netops.packets', 'netops.util'],
           'package_data' : {'netops': [] },
           'ext_modules'  : [],
 }

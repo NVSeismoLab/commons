@@ -26,7 +26,7 @@ finally:
 
 class CustomEventConverter(AntelopeEventConverter):
     """
-    EventBuilder that does custom addons for NSL
+    Converter that does custom site addons for NSL
     
     Methods
     -------
@@ -47,9 +47,7 @@ class CustomEventConverter(AntelopeEventConverter):
         Inputs
         ------
         obj : str or obspy.core.event class instance
-        url : Identifier to point toward an event
-        tag : Site-specific tag to ID data center
-
+        authority : string of an auth_id, e.g. 'nn.anss.org'
 
         Returns
         -------

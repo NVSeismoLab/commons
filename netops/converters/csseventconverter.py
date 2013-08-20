@@ -43,7 +43,6 @@ def _str(item):
 class CSSEventConverter(object):
     """
     Connection to build an ObsPy Event instance from CSS3.0 database
-    (Antelope only, for now).
 
     This class inherits from a DBAPI 2.0-compat Connection for Datascope.
     
@@ -249,7 +248,7 @@ class CSSEventConverter(object):
         return origin
     
     def _map_netmag2magnitude(self, db):
-        """Get Magnitude from Dbtuple of a netmag record"""
+        """Get Magnitude from dict of a netmag record"""
         m = Magnitude()
         m.mag             = db.get('magnitude')
         m.magnitude_type  = db.get('magtype')
@@ -268,7 +267,7 @@ class CSSEventConverter(object):
         return m
 
     def _map_origin2magnitude(self, db, mtype='ml'):
-        """Get Magnitude from Dbtuple of an origin record"""
+        """Get Magnitude from dict of an origin record"""
         m = Magnitude()
         m.mag             = db.get(mtype)
         m.magnitude_type  = mtype 
