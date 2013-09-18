@@ -1,32 +1,22 @@
 #
 """
-customconverter.py 
+quakemlconverter.py 
  -by Mark C. Williams (2013), Nevada Seismological Laboratory
 
-Custom site functions for the Nevada Seismological Laboratory:
-This CustomEventConverter class inherits from AntelopeEventConverter,
-and generates Event objects (which then convert to QuakeML) with settings
-appropriate for the Nevada Seismic Network Data Center in Reno, NV.
-
-For now, this class needs to be customized for a particular DC, in the
-future, it MAY be possible to abstract more of these esoteric settings
-to a config file, but some things, (like NSL's custom MT results) need
-to be implemented in code for now.
+This QuakemlConverter class inherits from AntelopeEventConverter,
+and generates Event objects (which then convert to QuakeML). Contains
+methods to facilitate Quakeml makin' including a unique RID gen function,
+and fxns to generate quakeml filename and anss attributes.
 
 """
 from antelopeconverter import AntelopeEventConverter
-from ichinose import mt2event
 from obspy.core.utcdatetime import UTCDateTime
-from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
-    EventDescription, OriginUncertainty, OriginQuality, CompositeTime,
-    ConfidenceEllipsoid, StationMagnitude, Comment, WaveformStreamID, Pick,
-    QuantityError, Arrival, FocalMechanism, MomentTensor, NodalPlanes,
-    PrincipalAxes, Axis, NodalPlane, SourceTimeFunction, Tensor, DataUsed,
-    ResourceIdentifier, StationMagnitudeContribution)
+from obspy.core.event import (Event, CreationInfo, Magnitude,
+    EventDescription, ResourceIdentifier)
 
 from ..util import pfgetter
 try:
-    pf = pfgetter('rt_quakeml')
+    pf = pfgetter('db2quakeml')
 except Exception:
     pf = {}
 finally:
@@ -37,7 +27,7 @@ finally:
     del pf
 
 
-class CustomEventConverter(AntelopeEventConverter):
+class QuakemlConverter(AntelopeEventConverter):
     """
     Converter that does custom site addons for NSL
     
@@ -83,9 +73,6 @@ class CustomEventConverter(AntelopeEventConverter):
         # Build up a list of strings to join for a valid RID string
         if isinstance(obj, str):
             l = ['quakeml:' + authority, obj]
-        elif isinstance(obj, Event):
-            evid = obj.creation_info.version
-            l = ['quakeml:'+ authority, 'Events/main.php?evid=' + evid]
         else:
             prefix = 'quakeml:'+ authority
             name   = obj.__class__.__name__
@@ -141,7 +128,6 @@ class CustomEventConverter(AntelopeEventConverter):
         delete     : bool of whether to mark event deleted (False)
         phase_data : bool of whether to include phase arrivals for event (False)
         focal_data : bool of whether to look for focal mechanisms (False)
-        mt         : file/contents of NSL moment tensor (Ichinose)
 
         Returns : obspy.core.event.Event
         
@@ -154,17 +140,11 @@ class CustomEventConverter(AntelopeEventConverter):
                 pass
         # 1. Build a stub Event to send a delete
         if delete:
-            e_type = "not existing"
-            self.event = Event(event_type=e_type)
+            self.event = Event(event_type="not existing")
             self.event.creation_info = CreationInfo(version=evid, creation_time=UTCDateTime())
             self.event.resource_id = self._rid(self.event)
         else:
-        # 2. Make a custom event (mt is a special-formatted text file)
-            if mt:
-                self.event = mt2event(mt, quakeml_rid=self.quakeml_rid)
-        # 3. Use EventBuilder to get Event from the db
-            else:
-                self._build(orid=orid, phases=phase_data, focals=focal_data, event_type="not reported")
+            self._build(orid=orid, phases=phase_data, focals=focal_data, event_type="not reported")
             # if no EVID reported, try to get it from the db (version attribute)
             if not evid:
                 evid = int(self.event.creation_info.version)
@@ -193,7 +173,7 @@ def build_event(database, *args, **kwargs):
     Returns : obspy.core.event.Event instance
     
     """
-    dbc = CustomEventConverter(database)
+    dbc = QuakemlConverter(database)
     dbc.build(*args, **kwargs)
     dbc.connection.close()
     return dbc.event
