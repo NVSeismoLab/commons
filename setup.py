@@ -10,7 +10,7 @@ s_args = {'name'         : 'netops',
           'description'  : 'Network Operations utilities',
           'author'       : 'Nevada Seismological Lab',
           'url'          : 'https//github.com/NVSeismoLab',
-          'packages'     : ['netops', 'netops.converters', 'netops.packets', 'netops.util'],
+          'packages'     : ['netops', 'netops.converters', 'netops.packets'],
           'package_data' : {'netops': [] },
           'ext_modules'  : [],
 }
