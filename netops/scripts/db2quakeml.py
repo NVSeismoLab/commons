@@ -8,6 +8,20 @@ from netops.converters import QuakemlConverter as Converter
 
 def db2qml(**kwargs):
     """
+        Inputs
+        ------
+        database   : str name of db
+        evid       : int of EVID
+        orid       : int of ORID
+        delete     : bool of whether to mark event deleted (False)
+        phase_data : bool of whether to include phase arrivals for event (False)
+        focal_data : bool of whether to look for focal mechanisms (False)
+
+        Returns
+        -------
+        dict of  'name'    : unique filename for Quakeml
+                 'contents': str of Quakeml
+
     """
     if   'delete' in kwargs and kwargs['delete']:
         product = "delete"
@@ -36,10 +50,9 @@ def write_quakeml(path=None, **kwargs):
    
     Inputs
     ------
-    path : str of directory to save file in
-    **kwargs
-        - passed to EventBuilder.build()
-        - depend on implementation
+    path     : str of directory to save file in
+    **kwargs : passed to 'db2qml' function
+
     """
     qml = db2qml(**kwargs)
     if path:
