@@ -10,7 +10,17 @@ from netops.converters import QuakemlConverter
 from netops.converters.ichinose import mt2event
 
 class Converter(QuakemlConverter):
+    """
+    Custom overrides on QuakemlConverter for NSL
     
+    1) quakeml_rid : if RID is for an Event, use the web
+    URL which resolves to an actual page.
+
+    2) build : check for an 'mt' string, and run the special
+    converter to get an Event/FocalMech/Mag/MomentTensor out
+    of it...
+
+    """
     @staticmethod
     def quakeml_rid(obj, authority):
         """
@@ -81,26 +91,27 @@ class Converter(QuakemlConverter):
                 pass
         # 1. Build a stub Event to send a delete
         if delete:
-            e_type = "not existing"
-            self.event = Event(event_type=e_type)
+            self.event = Event(event_type="not existing")
             self.event.creation_info = CreationInfo(version=evid, creation_time=UTCDateTime())
             self.event.resource_id = self._rid(self.event)
-        else:
+        elif mt:
         # 2. Make a custom event (mt is a special-formatted text file)
-            if mt:
-                self.event = mt2event(mt, quakeml_rid=self.quakeml_rid)
+            self.event = mt2event(mt, quakeml_rid=self.quakeml_rid)
         # 3. Use EventBuilder to get Event from the db
-            else:
-                self._build(orid=orid, phases=phase_data, focals=focal_data, event_type="not reported")
-            # if no EVID reported, try to get it from the db (version attribute)
-            if not evid:
-                evid = int(self.event.creation_info.version)
+        else:
+            self._build(orid=orid, phases=phase_data, focals=focal_data, event_type="not reported")
+        
+        # if no EVID reported, try to get it from the db (version attribute)
+        if not evid:
+            evid = int(self.event.creation_info.version)
+        
         # Add a nearest event string, try to set event type with custom etype additions
         prefor = self.event.preferred_origin()
         if prefor is not None:
             self.event.event_type = self.origin_event_type(prefor, emap=self.emap)
             ed = self.get_nearest_event_description(prefor.latitude, prefor.longitude)
             self.event.event_descriptions = [ed]
+        
         # Generate NSL namespace attributes
         extra_attributes = self.quakeml_anss_attrib(evid)
         self.event.extra = self.extra_anss(**extra_attributes)
@@ -108,6 +119,10 @@ class Converter(QuakemlConverter):
 
 def db2qml(**kwargs):
     """
+    Function to run an Event converter and produce some
+    QuakeML, returns a dict with a name and contents of
+    the file as a string.
+
     """
     if   'delete' in kwargs and kwargs['delete']:
         product = "delete"
@@ -144,14 +159,16 @@ def write_quakeml(path=None, **kwargs):
     qml = db2qml(**kwargs)
     if path:
         qml_file = os.path.join(path, qml['name'])
+    else:
+        qml_file = qml['name']
     
     try: 
         with open(qml_file,'w') as qf:
             qf.write(qml['contents'])
     except IOError:
-        qml['name'] = ''
+        qml_file = ''
     
-    return [ qml['name'] ]
+    return [ qml_file ]
 
 # Quickie call for x script (for testing, may go away)
 #

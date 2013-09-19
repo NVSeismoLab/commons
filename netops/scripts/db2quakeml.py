@@ -57,14 +57,16 @@ def write_quakeml(path=None, **kwargs):
     qml = db2qml(**kwargs)
     if path:
         qml_file = os.path.join(path, qml['name'])
-    
+    else:
+        qml_file = qml['name']
+
     try: 
         with open(qml_file,'w') as qf:
             qf.write(qml['contents'])
     except IOError:
-        qml['name'] = ''
+        qml_file = ''
     
-    return [ qml['name'] ]
+    return [ qml_file ]
 
 # Quickie call for x script (for testing, may go away)
 #
