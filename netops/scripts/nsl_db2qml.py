@@ -5,7 +5,7 @@
 #
 
 import os
-from obspy.core.event import Event, CreationInfo, Magnitude, ResourceIdentifier
+from obspy.core.event import UTCDateTime, Event, CreationInfo, Magnitude, ResourceIdentifier
 from netops.converters import QuakemlConverter
 from netops.converters.ichinose import mt2event
 
