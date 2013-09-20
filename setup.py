@@ -6,7 +6,7 @@ from numpy.distutils.core import setup
 ### Regular setup stuff ######################################################
 
 s_args = {'name'         : 'netops',
-          'version'      : '0.2.0',
+          'version'      : '0.2.1',
           'description'  : 'Network Operations utilities',
           'author'       : 'Nevada Seismological Lab',
           'url'          : 'https//github.com/NVSeismoLab',
