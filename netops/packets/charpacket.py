@@ -1,6 +1,4 @@
-#
-# Utilities for making character packets for our status ORBS
-#
+# -*- coding: utf-8 -*-
 """
 charpacket.py
 -by Mark C. Williams (2013) Nevada Seismological Laboratory
@@ -10,45 +8,9 @@ Character packet class used by NSL for message passing in ORBs
 
 """
 from antelope.Pkt import Packet
+from packet_conf import subcode_content, int_types as INT_TYPES, float_types as FLOAT_TYPES
 
-#
-# Ever-growing list of subcodes and the junk in them.
-#
-subcode_content = {
-    'event_new'          : ('evid','orid','mag','time','srcdb','snapdb'),
-    'event_pre'          : ('evid','orid','mag','time','srcdb','snapdb'),
-    'event_delete'       : ('evid','orid'),
-    'event_old'          : ('evid','orid','mag','time','srcdb','snapdb'),
-    'event_hypo'         : ('evid','orid','mag','time','srcdb','snapdb'),
-    'event_mark_reviewed'   : (None,),
-    'db2shakemap_pre'       : (None,),
-    'rttimer_sync'          : ('interval',),
-    'rtweb_delete'          : (None,),
-    'rtweb_new'             : (None,),
-    'rtweb_new-external'    : (None,),
-    'rtweb_pre'             : (None,),
-    'rtweb_pre-external'    : (None,),
-    'rtweb_sync'            : ('time',),
-    'reporter_hypo'         : (None,),
-    'reporter_hypo-external': (None,),
-    'reporter_new'          : (None,),
-    'reporter_new-external' : (None,),
-    'reporter_pre'          : (None,),
-    'reporter_pre-external' : (None,),
-    'reporter_delete'       : ('evid','orid'),
-    'rt_hazus_pre'          : (None,),
-    'rtfocalmech_pre'       : (None,),
-    'mw_new'                : (None,),
-    'mw_pre'                : (None,),
-    'mw_publish'            : ('mt',),
-}
-
-# Map these to non-string types when unpickling to a dict
-#
-int_types   = ('evid','orid','interval')
-float_types = ('mag', 'time')
-
-def _entype(key, value):
+def _entype(key, value, int_types=INT_TYPES, float_types=FLOAT_TYPES):
     """
     Convert hashed values to other types based on a lookup
     
