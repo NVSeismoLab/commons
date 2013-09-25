@@ -108,6 +108,7 @@ class AntelopeEventConverter(CSSEventConverter):
         cmd = ['dbopen fplane', 'dbsubset orid=={0}'.format(orid)]
         curs = self.connection.cursor()
         rec = curs.execute('process', [cmd] )
+        curs.CONVERT_NULL = False # Antelope schema bug - missing fplane NULLS
         return self._focalmechs(curs)
 
     def get_origins(self, orid=None, evid=None):
@@ -229,8 +230,7 @@ class AntelopeEventConverter(CSSEventConverter):
         if phases:
             self.event.picks, origin.arrivals = self.get_phases(orid)
         if focals:
-            #event.focal_mechanisms = self.get_focalmechs(orid)
-            pass 
+            self.event.focal_mechanisms = self.get_focalmechs(orid)
         self.event.origins = origins
         self.event.preferred_origin_id = origin.resource_id.resource_id
         self.event.creation_info = origin.creation_info.copy()
