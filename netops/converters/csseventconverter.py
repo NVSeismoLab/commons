@@ -39,6 +39,12 @@ def _str(item):
     else:
         return ''
 
+def _km2m(dist):
+    """Convert from km to m only if dist is not None"""
+    if dist is not None:
+        return dist * 1000.
+    else:
+        return None
 
 class CSSEventConverter(object):
     """
@@ -212,13 +218,18 @@ class CSSEventConverter(object):
         
         # Don't send ellipse params if db values are null
         # (which happens when no error was calulated)
-        _e_props = ('semi_minor_axis_length', 
+        #
+        # otherwise convert km to m
+        #
+        _e_props = (
+            'semi_minor_axis_length', 
             'semi_major_axis_length',
             'semi_intermediate_axis_length', 
-            'major_axis_azimuth',
             )
         if not all([ellipse[k] for k in _e_props]):
             ellipse = None
+        else:
+            ellipse.update({ k : _km2m(ellipse[k]) for k in _e_props})
 
         quality = OriginQuality(
             associated_phase_count = db.get('nass'),
@@ -229,7 +240,7 @@ class CSSEventConverter(object):
         origin               = Origin()
         origin.latitude      = db.get('lat')
         origin.longitude     = db.get('lon')
-        origin.depth         = db.get('depth')
+        origin.depth         = _km2m(db.get('depth'))
         origin.time          = _utc(db.get('time'))
         origin.quality       = quality
         origin.creation_info = CreationInfo(
