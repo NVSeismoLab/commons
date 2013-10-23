@@ -196,7 +196,11 @@ class CSSEventConverter(object):
         Returns : obspy.core.event.Origin
 
         """ 
+        # in CSS the ellipse is projected onto the horizontal plane
+        # using the covariance matrix
+        #
         # majax plunge, rotation are Tait-Bryan angles phi, theta
+        #
         ellipse = ConfidenceEllipsoid(
             major_axis_plunge = 0, 
             major_axis_rotation = 0,
@@ -206,6 +210,16 @@ class CSSEventConverter(object):
             major_axis_azimuth            = db.get('strike'),
             )
         
+        # Don't send ellipse params if db values are null
+        # (which happens when no error was calulated)
+        _e_props = ('semi_minor_axis_length', 
+            'semi_major_axis_length',
+            'semi_intermediate_axis_length', 
+            'major_axis_azimuth',
+            )
+        if not all([ellipse[k] for k in _e_props]):
+            ellipse = None
+
         quality = OriginQuality(
             associated_phase_count = db.get('nass'),
             used_phase_count       = db.get('ndef'),
