@@ -23,7 +23,7 @@ from numpy import array
 from obspy.core.util import gps2DistAzimuth
 from curds2 import connect, OrderedDictRow, NamedTupleRow
 from csseventconverter import CSSEventConverter
-from ..util import azimuth2compass
+from netops.util import azimuth2compass
 
 
 class AntelopeEventConverter(CSSEventConverter):
