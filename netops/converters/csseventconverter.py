@@ -208,18 +208,16 @@ class CSSEventConverter(object):
         # majax plunge, rotation are Tait-Bryan angles phi, theta
         #
         ellipse = ConfidenceEllipsoid(
-            major_axis_plunge = 0, 
-            major_axis_rotation = 0,
-            semi_minor_axis_length        = db.get('sminax'),
-            semi_major_axis_length        = db.get('smajax'),
-            semi_intermediate_axis_length = db.get('sdepth'),
+            major_axis_plunge             = 0, 
+            major_axis_rotation           = 0,
             major_axis_azimuth            = db.get('strike'),
+            semi_minor_axis_length        = _km2m(db.get('sminax')),
+            semi_major_axis_length        = _km2m(db.get('smajax')),
+            semi_intermediate_axis_length = _km2m(db.get('sdepth')),
             )
         
         # Don't send ellipse params if db values are null
         # (which happens when no error was calulated)
-        #
-        # otherwise convert km to m
         #
         _e_props = (
             'semi_minor_axis_length', 
@@ -228,8 +226,6 @@ class CSSEventConverter(object):
             )
         if not all([ellipse[k] for k in _e_props]):
             ellipse = None
-        else:
-            ellipse.update({ k : _km2m(ellipse[k]) for k in _e_props})
 
         quality = OriginQuality(
             associated_phase_count = db.get('nass'),
@@ -249,13 +245,14 @@ class CSSEventConverter(object):
             version       = db.get('orid'),
             )
 
-        origin.origin_uncertainty = OriginUncertainty(
-            confidence_ellipsoid  = ellipse,
-            preferred_description = "confidence ellipsoid",
-            ) 
+        uncertainty = OriginUncertainty()
+        if ellipse is not None:
+	    uncertainty.confidence_ellipsoid  = ellipse
+            uncertainty.preferred_description = "confidence ellipsoid"
+            if db.get('conf') is not None:
+                uncertainty.confidence_level = db.get('conf') * 100.  
         
-        if db.get('conf') is not None:
-            origin.origin_uncertainty.confidence_level = db.get('conf') * 100.
+	origin.origin_uncertainty = uncertainty
 
         if 'orbassoc' in _str(db.get('auth')):
             origin.evaluation_mode   = "automatic"
