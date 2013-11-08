@@ -23,7 +23,7 @@ from numpy import array
 from obspy.core.util import gps2DistAzimuth
 from curds2 import connect, OrderedDictRow, NamedTupleRow
 from csseventconverter import CSSEventConverter
-from netops.util import azimuth2compass
+from netops.util import azimuth2compass, add_quality_params_from_data
 
 
 class AntelopeEventConverter(CSSEventConverter):
@@ -226,9 +226,10 @@ class AntelopeEventConverter(CSSEventConverter):
                     m.origin_id = origin.resource_id
                 self.event.magnitudes = maglist
                 self.event.preferred_magnitude_id = maglist[0].resource_id.resource_id
-        # Add other data objects
-        if phases:
-            self.event.picks, origin.arrivals = self.get_phases(orid)
+            # Add other data objects
+            if phases:
+                self.event.picks, origin.arrivals = self.get_phases(orid)
+                add_quality_params_from_data(origin)
         if focals:
             self.event.focal_mechanisms = self.get_focalmechs(orid)
         self.event.origins = origins

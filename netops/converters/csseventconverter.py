@@ -388,6 +388,13 @@ class CSSEventConverter(object):
             creation_time = _utc(db.get('lddate')),
             agency_id = self.agency,
             )
+        # Save timedef in a comment due to schema differences...
+        assoc_str = _str(db.get('arid')) + '-' + _str(db.get('orid'))
+        timedef_comment = Comment(
+            resource_id = ResourceIdentifier(self._prefix + "/comment/timedef/" + assoc_str),
+            text        = _str(db.get('timedef'))
+            )
+        a.comments = [timedef_comment]
         a.resource_id = self._rid(a)
         return p, a
 
