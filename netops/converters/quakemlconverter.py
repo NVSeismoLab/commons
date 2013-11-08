@@ -104,6 +104,7 @@ class QuakemlConverter(AntelopeEventConverter):
             anss_id = '{0:08d}'.format(evid)
         else:
             anss_id = '00000000'
+        anss_id = agency_code + anss_id
         return {'datasource' : agency_code, 'dataid' : anss_id, 'eventsource' : agency_code, 'eventid' : anss_id}
     
     def quakeml_filename(self, product):
