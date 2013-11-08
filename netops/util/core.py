@@ -66,14 +66,16 @@ def azimuth2compass(azimuth):
         needle = 'N'
     return needle
 
+
 def _timedef(comments):
     """Return timedef from a list of comments"""
     for c in comments:
         if 'timedef' in c.resource_id.resource_id:
             return c.text
 
+
 def add_quality_params_from_data(origin):
-    """Return number of unique station arrivals"""
+    """Add OriginQuality data calculated from Origin Arrival info"""
     azimuths =  {a.azimuth for a in origin.arrivals}
     distances = {a.distance for a in origin.arrivals}
     def_azis = {a.azimuth for a in origin.arrivals if _timedef(a.comments) == 'd'}
