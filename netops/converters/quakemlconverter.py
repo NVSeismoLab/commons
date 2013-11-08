@@ -108,7 +108,7 @@ class QuakemlConverter(AntelopeEventConverter):
         return {'datasource' : agency_code, 'dataid' : anss_id, 'eventsource' : agency_code, 'eventid' : anss_id}
     
     def quakeml_filename(self, product):
-        return self.event.extra['eventsource']['value'] + self.event.extra['eventid']['value'] + '_' + product + '.xml'
+        return self.event.extra['eventid']['value'] + '_' + product + '.xml'
     
     def get_nearest_event_description(self, latitude, longitude):
         nearest_city_string = self.get_nearest_city(latitude, longitude, database=self.place_db)
