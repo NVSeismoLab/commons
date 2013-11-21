@@ -182,13 +182,12 @@ class AntelopeEventConverter(CSSEventConverter):
         """
         # Get associated picks
         #
-        # took out 'dbjoin snetsta' and 'dbjoin schanloc'
-        # schanloc wouldn't join right (need theta join), and not all dbsnapshots have snetsta access. WTF.
-        # NOTE Try affiliation?? Didn't work for test db, but yes for the archive... WTF?
+        # Leaving the affiliation as an outer join - don't toss picks
+        # b/c we don't have a net code. Onward.
         #
-        # Leaving the affiliation as an outer join - don't toss picks b/c we don't have a net code. Onward.
-        #
-        cmd = ['dbopen assoc', 'dbsubset orid=={0}'.format(orid), 'dbjoin arrival', 'dbjoin -o affiliation']
+        cmd = ['dbopen assoc', 'dbsubset orid=={0}'.format(orid),
+               'dbjoin arrival', 'dbjoin -o affiliation',
+               'dbjoin -o schanloc sta chan']
         curs = self.connection.cursor()
         rec = curs.execute('process', [cmd] )
         return self._phases(curs)

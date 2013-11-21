@@ -252,7 +252,7 @@ class CSSEventConverter(object):
             if db.get('conf') is not None:
                 uncertainty.confidence_level = db.get('conf') * 100.  
         
-	origin.origin_uncertainty = uncertainty
+        origin.origin_uncertainty = uncertainty
 
         if 'orbassoc' in _str(db.get('auth')):
             origin.evaluation_mode   = "automatic"
@@ -323,9 +323,11 @@ class CSSEventConverter(object):
         """
         p = Pick()
         p.time = _utc(db.get('time'))
+        css_chan = db.get('chan')
         p.waveform_id = WaveformStreamID(station_code = db.get('sta'), 
-                                         channel_code = db.get('chan'),
+                                         channel_code = db.get('fchan', css_chan),
                                          network_code = db.get('net'),
+                                         location_code = db.get('loc'),
                                          )
         p.horizontal_slowness = db.get('slow')
         p.horizontal_slowness_errors = self._create_dict(db, 'delslo')
