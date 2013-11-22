@@ -65,18 +65,15 @@ class Parser(object):
         Moment Tensor in Spherical coordinates
         Input  :  n (where n is line of title)
         Output :  dict of element/value of tensor
-                  e.g. 'Mrr','Mtf' plus exponent 'EXP'
+                  e.g. 'Mrr','Mtf' raised to 'EXP'-7 (N-m)
         '''
-        mt = {}
         line1  =  re.findall(r'...=(?:\s+\-?\d\.\d+|\d{2})', self.line[n+1])
         line1  += re.findall(r'...=(?:\s+\-?\d\.\d+|\d{2})', self.line[n+2])
-        for m in line1:
-            key, value = m.split('=')
-            if 'EXP' in key:
-                value = int(value)
-            else:
-                value = float(value)
-            mt[key] = value
+        exp_str = line1.pop(-1)
+        exp = int(exp_str.split('=')[1]) - 7 # N-m
+        mt = dict(m.split('=') for m in line1)
+        for k, v in mt.iteritems():
+            mt[k] = float(v) * 10**exp
         return mt
 
     def _mt_cart(self, n):
