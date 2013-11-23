@@ -187,6 +187,7 @@ def mt2event(filehandle, quakeml_rid=rid):
     ''' 
     p = Parser(filehandle)
     event         = Event(event_type='earthquake')
+    origin        = Origin()
     focal_mech    = FocalMechanism()
     nodal_planes  = NodalPlanes()
     moment_tensor = MomentTensor()
@@ -251,12 +252,15 @@ def mt2event(filehandle, quakeml_rid=rid):
         if re.match(r'^Date', l):
             creation_info.creation_time = p._creation_time(n)
     # Creation Time
-    creation_info.version = ev['orid']
+    creation_info.version = orid
     # Fill in magnitude values
     magnitude.evaluation_mode = ev_mode
     magnitude.evaluation_status = ev_stat
     magnitude.creation_info = creation_info.copy()
     magnitude.resource_id = quakeml_rid(magnitude)
+    # Stub origin
+    origin.depth = 0 # TODO: get depth from file (triggering originID?)
+    origin.creation_info = creation_info.copy()
     # Make an id for the moment tensor mag which references this mag
     mrid = magnitude.resource_id.resource_id
     mmid = ResourceIdentifier(mrid, referred_object=magnitude)
