@@ -212,6 +212,8 @@ def mt2event(filehandle, quakeml_rid=rid):
             moment_tensor.category = 'regional'
         if re.match(r'^\d{4}\/\d{2}\/\d{2}', l):
             ev = p._event_info(n)
+        if 'Depth' in l:
+            derived_depth = p._depth(n)
         if 'Mw' in l:
             magnitude.mag = p._mw(n) 
             magnitude.magnitude_type = 'Mw'
@@ -259,8 +261,17 @@ def mt2event(filehandle, quakeml_rid=rid):
     magnitude.creation_info = creation_info.copy()
     magnitude.resource_id = quakeml_rid(magnitude)
     # Stub origin
-    origin.depth = 0 # TODO: get depth from file (triggering originID?)
+    origin.time = ev.get('time')
+    origin.latitude = ev.get('lat')
+    origin.longitude = ev.get('lon')
+    origin.depth = derived_depth
+    origin.depth_type = "from moment tensor inversion"
     origin.creation_info = creation_info.copy()
+    origin.resource_id = quakeml_rid(origin)
+    origin.resource_id.resource_id += '/mt' # Unique from true origin ID
+    # Make an id for the MT that references this origin
+    ogid = origin.resource_id.resource_id
+    doid = ResourceIdentifier(ogid, referred_object=origin)
     # Make an id for the moment tensor mag which references this mag
     mrid = magnitude.resource_id.resource_id
     mmid = ResourceIdentifier(mrid, referred_object=magnitude)
@@ -269,6 +280,7 @@ def mt2event(filehandle, quakeml_rid=rid):
     moment_tensor.evaluation_status = ev_stat
     moment_tensor.data_used = data_used
     moment_tensor.moment_magnitude_id = mmid
+    moment_tensor.derived_origin_id = doid
     moment_tensor.creation_info = creation_info.copy()
     moment_tensor.resource_id = quakeml_rid(moment_tensor)
     # Fill in focal_mech values
@@ -280,6 +292,7 @@ def mt2event(filehandle, quakeml_rid=rid):
     # add mech and new magnitude to event
     event.focal_mechanisms = [focal_mech]
     event.magnitudes = [magnitude]
+    event.origins = [origin]
     event.creation_info = creation_info.copy()
     # If an MT was done, that's the preferred mag/mech
     event.preferred_magnitude_id = magnitude.resource_id.resource_id
