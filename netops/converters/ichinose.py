@@ -267,8 +267,10 @@ def mt2event(filehandle, quakeml_rid=rid):
     origin.depth = derived_depth * 1000.
     origin.depth_type = "from moment tensor inversion"
     origin.creation_info = creation_info.copy()
-    origin.resource_id = quakeml_rid(origin)
-    origin.resource_id.resource_id += '/mt' # Unique from true origin ID
+     # Unique from true origin ID
+    _oid = quakeml_rid(origin)
+    origin.resource_id = ResourceIdentifier(_oid.resource_id + '/mt')
+    del _oid
     # Make an id for the MT that references this origin
     ogid = origin.resource_id.resource_id
     doid = ResourceIdentifier(ogid, referred_object=origin)
