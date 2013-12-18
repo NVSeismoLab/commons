@@ -62,16 +62,16 @@ def get_n_e_on_ellipse(A, B, strike):
     """
     Return the solution for points N and E on an ellipse
     
-    A : float of major axis diameter
-    B : float of minor axis diameter
+    A : float of semi major axis
+    B : float of semi minor axis
     strike : angle of major axis from North
 
     Returns
     -------
     n, e : floats of ellipse solution at north and east
     """
-    n = _eval_ellipse(A/2, B/2, strike)
-    e = _eval_ellipse(A/2, B/2, strike-90)
+    n = _eval_ellipse(A, B, strike)
+    e = _eval_ellipse(A, B, strike-90)
     return n, e
 
 
