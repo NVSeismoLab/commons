@@ -16,6 +16,7 @@ CSSEventConverter : methods to convert CSS to QuakeML schema
 
 
 """
+import math
 from quakeml import Pickler
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
@@ -46,12 +47,38 @@ def _km2m(dist):
     else:
         return None
 
+def _m2deg_lat(dist):
+    return dist / 110600.
+
+def _m2deg_lon(dist, lat=0.):
+    M = 6367449.
+    return dist / (math.pi / 180.) / M / math.cos(math.radians(lat))
+
+def _eval_ellipse(a, b, angle):
+    return a*b/(math.sqrt((b*math.cos(math.radians(angle)))**2 +
+                          (a*math.sin(math.radians(angle)))**2))
+
+def get_n_e_on_ellipse(A, B, strike):
+    """
+    Return the solution for points N and E on an ellipse
+    
+    A : float of major axis diameter
+    B : float of minor axis diameter
+    strike : angle of major axis from North
+
+    Returns
+    -------
+    n, e : floats of ellipse solution at north and east
+    """
+    n = _eval_ellipse(A/2, B/2, strike)
+    e = _eval_ellipse(A/2, B/2, strike-90)
+    return n, e
+
+
 class CSSEventConverter(object):
     """
-    Connection to build an ObsPy Event instance from CSS3.0 database
+    Converter to build an ObsPy Event instance from CSS3.0 database
 
-    This class inherits from a DBAPI 2.0-compat Connection for Datascope.
-    
     Attributes
     ----------
     auth_id : str of authority URL (publicID)
@@ -67,7 +94,7 @@ class CSSEventConverter(object):
     get_event_type : static class method to convert CSS origin type flag
 
     """
-    connection = None # DBAPI2 database connection
+    #connection = None # DBAPI2 database connection
     event   = None    # event instance
     auth_id = 'local' # publicID, authority URL
     agency  = 'XX'    # agency ID, ususally net code
@@ -202,30 +229,6 @@ class CSSEventConverter(object):
         Returns : obspy.core.event.Origin
 
         """ 
-        # in CSS the ellipse is projected onto the horizontal plane
-        # using the covariance matrix
-        #
-        # majax plunge, rotation are Tait-Bryan angles phi, theta
-        #
-        ellipse = ConfidenceEllipsoid(
-            major_axis_plunge             = 0, 
-            major_axis_rotation           = 0,
-            major_axis_azimuth            = db.get('strike'),
-            semi_minor_axis_length        = _km2m(db.get('sminax')),
-            semi_major_axis_length        = _km2m(db.get('smajax')),
-            semi_intermediate_axis_length = _km2m(db.get('sdepth')),
-            )
-        
-        # Don't send ellipse params if db values are null
-        # (which happens when no error was calulated)
-        #
-        _e_props = (
-            'semi_minor_axis_length', 
-            'semi_major_axis_length',
-            'semi_intermediate_axis_length', 
-            )
-        if not all([ellipse[k] for k in _e_props]):
-            ellipse = None
 
         quality = OriginQuality(
             associated_phase_count = db.get('nass'),
@@ -244,15 +247,40 @@ class CSSEventConverter(object):
             agency_id     = self.agency, 
             version       = db.get('orid'),
             )
-
-        uncertainty = OriginUncertainty()
-        if ellipse is not None:
-	    uncertainty.confidence_ellipsoid  = ellipse
-            uncertainty.preferred_description = "confidence ellipsoid"
-            if db.get('conf') is not None:
-                uncertainty.confidence_level = db.get('conf') * 100.  
         
+        # Solution Uncertainties
+        # in CSS the ellipse is projected onto the horizontal plane
+        # using the covariance matrix
+        uncertainty = OriginUncertainty()
+        a = _km2m(db.get('smajax'))
+        b = _km2m(db.get('sminax'))
+        s = db.get('strike')
+        dep_u = _km2m(db.get('sdepth'))
+        time_u = db.get('stime')
+
+        uncertainty.max_horizontal_uncertainty = a
+        uncertainty.min_horizontal_uncertainty = b
+        uncertainty.azimuth_max_horizontal_uncertainty = s
+        uncertainty.horizontal_uncertainty = a
+        uncertainty.preferred_description = "horizontal uncertainty"
+
+        if db.get('conf') is not None:
+            uncertainty.confidence_level = db.get('conf') * 100.  
+
         origin.origin_uncertainty = uncertainty
+
+        # Parameter Uncertainties 
+        if all([a, b, s]):
+            n, e = get_n_e_on_ellipse(a, b, s)
+            lat_u = _m2deg_lat(n)
+            lon_u = _m2deg_lon(e, lat=origin.latitude)
+            origin.latitude_errors = {'uncertainty': lat_u} 
+            origin.longitude_errors = {'uncertainty': lon_u}
+        if dep_u:
+            origin.depth_errors = {'uncertainty': dep_u}
+        if time_u:
+            origin.time_errors = {'uncertainty': time_u}
+
 
         if 'orbassoc' in _str(db.get('auth')):
             origin.evaluation_mode   = "automatic"
@@ -268,7 +296,7 @@ class CSSEventConverter(object):
         origin.comments = [etype_comment]
         origin.resource_id = self._rid(origin)
         return origin
-    
+
     def _map_netmag2magnitude(self, db):
         """Get Magnitude from dict of a netmag record"""
         m = Magnitude()

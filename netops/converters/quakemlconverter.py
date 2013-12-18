@@ -13,8 +13,7 @@ from antelopeconverter import AntelopeEventConverter
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.event import (Event, CreationInfo, Magnitude,
     EventDescription, ResourceIdentifier)
-
-from ..util import pfgetter
+from netops.util import pfgetter
 try:
     pf = pfgetter('db2quakeml')
 except Exception:
@@ -158,23 +157,9 @@ class QuakemlConverter(AntelopeEventConverter):
         extra_attributes = self.quakeml_anss_attrib(evid)
         self.event.extra = self.extra_anss(**extra_attributes)
 
-
 #--- Class as function -------------------------------------------------------
-def build_event(database, *args, **kwargs):
-    """
-    Convenience function for NSLEventBuilder class
-    See inline doc for NSLEventBuilder.build() method
-    
-    Inputs
-    ------
-    database : str or antelope.datascope.Dbptr of database
-    **kwargs : keyword args to be passed to event method
-    
-    Returns : obspy.core.event.Event instance
-    
-    """
-    dbc = QuakemlConverter(database)
-    dbc.build(*args, **kwargs)
-    dbc.connection.close()
-    return dbc.event
-
+#def build_event(database, *args, **kwargs):
+#    dbc = QuakemlConverter(database)
+#    dbc.build(*args, **kwargs)
+#    dbc.connection.close()
+#    return dbc.event

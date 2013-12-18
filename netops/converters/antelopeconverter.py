@@ -30,6 +30,10 @@ class AntelopeEventConverter(CSSEventConverter):
     """
     Extracts data in CSS schema from Antelope Datascope database
     and converts to (QuakeML) schema ObsPy Event.
+
+    Attributes
+    ----------
+    connection : DBAPI2 Database Connection instance
     
     Methods
     -------
@@ -46,6 +50,7 @@ class AntelopeEventConverter(CSSEventConverter):
     database data.
     
     """
+    connection = None # DBAPI2 database connection
 
     def __init__(self, database, perm='r', *args, **kwargs):
         """
@@ -55,6 +60,23 @@ class AntelopeEventConverter(CSSEventConverter):
         super(AntelopeEventConverter, self).__init__(*args, **kwargs)
         self.connection = connect(database, perm, row_factory=OrderedDictRow)
         self.connection.CONVERT_NULL = True
+    
+    def __enter__(self):
+        """Instance for context support"""
+        return self
+
+    def __exit__(self, ex_type, ex_value, ex_tb):
+        """
+        Call database connection context exit method if exists.
+        Otherwise try to close the connection
+        """
+        if hasattr(self.connection,'__exit__'): 
+            self.connection.__exit__(ex_type, ex_value, ex_tb)
+        else:
+            try:
+                self.connection.close()
+            except:
+                pass
 
     def _evid(self, orid):
         """
@@ -274,9 +296,6 @@ class AntelopeEventConverter(CSSEventConverter):
 #--- Main Functions -------------------------------------------------------
 def db2event(database, *args, **kwargs):
     """
-    Convenience fucntion for EventConverter class
-    See inline doc for CSSEventConverter.event() method
-    
     Inputs
     ------
     database : str or antelope.datascope.Dbptr of database
