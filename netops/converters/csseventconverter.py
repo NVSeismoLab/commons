@@ -267,7 +267,8 @@ class CSSEventConverter(object):
         if db.get('conf') is not None:
             uncertainty.confidence_level = db.get('conf') * 100.  
 
-        origin.origin_uncertainty = uncertainty
+        if uncertainty.horizontal_uncertainty is not None:
+            origin.origin_uncertainty = uncertainty
 
         # Parameter Uncertainties 
         if all([a, b, s]):
