@@ -94,3 +94,13 @@ def add_quality_params_from_data(origin):
         origin.quality.maximum_distance = dist_a.max()
         origin.quality.median_distance = np.median(dist_a)
         origin.quality.azimuthal_gap = gaps.max()
+
+
+def pf2json(pf):
+    """Convert ParameterFile objects to json"""
+    import json
+    # Quick check, depricate later
+    if '5.3' not in __antelopeversion__:
+        return None
+    return json.dumps(pf.pf2dict())
+
