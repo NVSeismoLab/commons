@@ -93,6 +93,13 @@ class CharPkt(Pkt):
         """
         return self.srcnameparts['subcode']
 
+    def set_subcode(self, value):
+        """
+        Subcode access
+
+        """
+        self.srcnameparts['subcode'] = value
+    
     def separate(self):
         """
         Returns list of strings broken by a separator

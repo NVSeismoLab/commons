@@ -87,6 +87,12 @@ class CharPacket(Packet):
         Subcode access
         """
         return self.srcname.subcode
+    
+    def set_subcode(self, value):
+        """
+        Subcode access
+        """
+        self.srcname.subcode = value
 
     def separate(self):
         """
