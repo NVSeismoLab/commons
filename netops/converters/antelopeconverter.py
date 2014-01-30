@@ -252,7 +252,10 @@ class AntelopeEventConverter(CSSEventConverter):
                 self.event.picks, origin.arrivals = self.get_phases(orid)
                 add_quality_params_from_data(origin)
         if focals:
-            self.event.focal_mechanisms = self.get_focalmechs(orid)
+            focalmechs = self.get_focalmechs(orid)
+            self.event.focal_mechanisms = focalmechs
+            if focalmechs:
+                self.event.preferred_focal_mechanism_id = str(focalmechs[-1].resource_id)
         self.event.origins = origins
         self.event.preferred_origin_id = origin.resource_id.resource_id
         self.event.creation_info = origin.creation_info.copy()
