@@ -830,7 +830,7 @@ class Pickler(object):
 
     def _waveform_id(self, obj, element, required=False):
         attrib = {}
-        if obj is None:
+        if not obj:
             return
         if obj.network_code:
             attrib['networkCode'] = obj.network_code
