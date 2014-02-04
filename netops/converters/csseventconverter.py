@@ -352,10 +352,11 @@ class CSSEventConverter(object):
         """
         p = Pick()
         p.time = _utc(db.get('time'))
+        css_sta = db.get('sta')
         css_chan = db.get('chan')
-        p.waveform_id = WaveformStreamID(station_code = db.get('sta'), 
+        p.waveform_id = WaveformStreamID(station_code = db.get('fsta', css_sta), 
                                          channel_code = db.get('fchan', css_chan),
-                                         network_code = db.get('net'),
+                                         network_code = db.get('snet'),
                                          location_code = db.get('loc'),
                                          )
         p.horizontal_slowness = db.get('slow')

@@ -202,13 +202,8 @@ class AntelopeEventConverter(CSSEventConverter):
         arrivals :  list of obspy.core.event.Arrival
 
         """
-        # Get associated picks
-        #
-        # Leaving the affiliation as an outer join - don't toss picks
-        # b/c we don't have a net code. Onward.
-        #
         cmd = ['dbopen assoc', 'dbsubset orid=={0}'.format(orid),
-               'dbjoin arrival', 'dbjoin -o affiliation',
+               'dbjoin arrival', 'dbjoin -o snetsta',
                'dbjoin -o schanloc sta chan']
         curs = self.connection.cursor()
         rec = curs.execute('process', [cmd] )
