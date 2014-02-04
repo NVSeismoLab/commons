@@ -1,7 +1,7 @@
 #
 # make some stuff available at the package level
 #
-__version__ = '0.5.2'
+__version__ = '0.5.3'
 
 from converters import *
 from util import __antelopeversion__, CharPkt, pfgetter, azimuth2compass
