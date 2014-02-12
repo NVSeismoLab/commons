@@ -13,6 +13,7 @@ s_args = {'name'         : 'netops',
           'packages'     : ['netops', 'netops.converters', 'netops.packets','netops.util'],
           'package_data' : {'netops': [] },
           'ext_modules'  : [],
+          'install_requires': ['obspy'],
 }
 
 # Go
