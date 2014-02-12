@@ -1,6 +1,11 @@
 #
 # setup.py file for netops
 #
+try:
+    import setuptools
+except ImportError:
+    print('Setuptools is needed to automatically resolve dependencies')
+
 from numpy.distutils.core import setup
 
 ### Regular setup stuff ######################################################
