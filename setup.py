@@ -13,7 +13,8 @@ s_args = {'name'         : 'netops',
           'packages'     : ['netops', 'netops.converters', 'netops.packets','netops.util'],
           'package_data' : {'netops': [] },
           'ext_modules'  : [],
-          'install_requires': ['obspy'],
+          'install_requires': ['obspy','curds2'],
+          'dependecncy_links': ['git+https://github.com/NVSeismoLab/curds2.git/#egg=curds2']
 }
 
 # Go
