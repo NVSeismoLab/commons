@@ -1,0 +1,8 @@
+#
+# Installs requirements
+#
+
+
+obspy
+git+https://github.com/NVSeismoLab/curds2.git#egg=curds2
+
