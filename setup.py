@@ -1,13 +1,12 @@
 #
 # setup.py file for netops
 #
-try:
-    from setuptools import setup
-except ImportError:
-    print('Setuptools is needed to automatically resolve dependencies')
-    from distutils import setup
+#try:
+#    import setuptools
+#except ImportError:
+#    pass
 
-#from numpy.distutils.core import setup
+from numpy.distutils.core import setup
 
 ### Regular setup stuff ######################################################
 
@@ -19,8 +18,7 @@ s_args = {'name'         : 'netops',
           'packages'     : ['netops', 'netops.converters', 'netops.packets','netops.util'],
           'package_data' : {'netops': [] },
           'ext_modules'  : [],
-          'install_requires': ['obspy','curds2'],
-          'dependency_links': ['https://github.com/NVSeismoLab/curds2/archive/master.zip#egg=curds2']
+          'install_requires': ['curds2', 'obspy'],
 }
 
 # Go
