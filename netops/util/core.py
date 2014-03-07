@@ -25,15 +25,17 @@ aximuth2compass : get letter compass direction from a 0-360
 import numpy as np
 import os
 
-__antelopeversion__ = os.environ['ANTELOPE'].split(os.path.sep)[-1]
+__antelopeversion__ = os.environ.get('ANTELOPE', os.sep).split(os.sep)[-1]
 
 if '5.3' in __antelopeversion__:
     from netops.packets.charpacket import CharPacket as CharPkt
     from antelope.stock import pfread as pfgetter
-else:
+elif __antelopeversion__:
     from netops.packets.charpkt import CharPkt
     from antelope.stock import pfget as pfgetter
-
+else:
+    CharPkt = tuple
+    pfgetter = open
 
 def azimuth2compass(azimuth):
     """
