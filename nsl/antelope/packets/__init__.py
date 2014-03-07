@@ -18,4 +18,4 @@ elif '5.' in __antelopeversion__:
     from nsl.antelope.packets.charpkt import CharPkt
 else:
     raise ImportError("Can't import Character packet for Vers: {0}".format(
-                       __antelopeversion__)
+                       __antelopeversion__))
