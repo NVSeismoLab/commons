@@ -5,7 +5,7 @@ nsl.antelope.converters
 NSL's converter classes
 
 """
-from nsl.antelope.converters.csseventconverter import CSSEventConverter
-from nsl.antelope.converters.antelopeconverter import AntelopeEventConverter
-from nsl.antelope.converters.quakemlconverter import QuakemlConverter
+from nsl.converters.csseventconverter import CSSEventConverter
+from nsl.converters.antelopeconverter import AntelopeEventConverter
+from nsl.converters.quakemlconverter import QuakemlConverter
 

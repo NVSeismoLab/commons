@@ -150,7 +150,7 @@ class CSSEventConverter(object):
         """Return a proper event_type from a CSS3.0 etype flag stored in an origin Comment"""
         if origin.comments:
             for comm in origin.comments:
-                if 'etype' in comm.resource_id.resource_id:
+                if 'etype' in str(comm.resource_id):
                     etype = comm.text
                     return cls.get_event_type(etype, etype_map=emap)
     
@@ -443,7 +443,7 @@ class CSSEventConverter(object):
 
         # Now do the arrival
         a = Arrival()
-        a.pick_id = ResourceIdentifier(p.resource_id.resource_id, referred_object=p)
+        a.pick_id = ResourceIdentifier(str(p.resource_id), referred_object=p)
         a.phase = db.get('phase')
         a.azimuth = db.get('esaz')
         a.distance = db.get('delta')

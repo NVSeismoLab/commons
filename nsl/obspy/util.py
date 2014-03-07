@@ -12,7 +12,7 @@ import numpy as np
 def _timedef(comments):
     """Return timedef from a list of comments"""
     for c in comments:
-        if 'timedef' in c.resource_id.resource_id:
+        if 'timedef' in str(c.resource_id):
             return c.text
 
 

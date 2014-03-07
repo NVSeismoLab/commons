@@ -23,7 +23,7 @@ from obspy.core.util import gps2DistAzimuth
 from curds2 import connect, OrderedDictRow, NamedTupleRow
 from nsl.common.util import azimuth2compass
 from nsl.obspy.util import add_quality_params_from_data
-from nsl.antelope.converters.csseventconverter import CSSEventConverter
+from nsl.converters.csseventconverter import CSSEventConverter
 from nsl.antelope.pf import get_pf
 
 
@@ -299,7 +299,7 @@ class AntelopeEventConverter(CSSEventConverter):
                 for m in maglist:
                     m.origin_id = origin.resource_id
                 self.event.magnitudes = maglist
-                self.event.preferred_magnitude_id = maglist[0].resource_id.resource_id
+                self.event.preferred_magnitude_id = str(maglist[0].resource_id)
             # Add other data objects
             if phases:
                 self.event.picks, origin.arrivals = self.get_phases(orid)
@@ -310,7 +310,7 @@ class AntelopeEventConverter(CSSEventConverter):
             if focalmechs:
                 self.event.preferred_focal_mechanism_id = str(focalmechs[-1].resource_id)
         self.event.origins = origins
-        self.event.preferred_origin_id = origin.resource_id.resource_id
+        self.event.preferred_origin_id = str(origin.resource_id)
         self.event.creation_info = origin.creation_info.copy()
         self.event.creation_info.version = self._evid(orid)
         self.event.resource_id = self._rid(self.event)

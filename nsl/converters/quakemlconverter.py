@@ -33,7 +33,7 @@ from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.event import (Event, CreationInfo, Magnitude,
                               ResourceIdentifier)
 from nsl.obspy.patches.quakeml import Pickler
-from nsl.antelope.converters.antelopeconverter import AntelopeEventConverter
+from nsl.converters.antelopeconverter import AntelopeEventConverter
 
 
 def quakeml_rid(converter, obj, authority='local'):

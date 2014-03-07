@@ -1,4 +1,4 @@
 *.pyc
 tests
 build
-netops.egg-info
+*.egg-info
