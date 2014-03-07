@@ -9,7 +9,8 @@ Character packet class used by NSL for message passing in ORBs
 """
 
 from antelope.Pkt import Pkt, suffix2pkttype, Pkt_ch
-from packet_conf import subcode_content, int_types as INT_TYPES, float_types as FLOAT_TYPES
+from packet_conf import (subcode_content, int_types as INT_TYPES,
+                         float_types as FLOAT_TYPES)
 
 def _entype(key, value, int_types=INT_TYPES, float_types=FLOAT_TYPES):
     """

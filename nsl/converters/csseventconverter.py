@@ -1,23 +1,25 @@
-#
+# -*- coding: utf-8 -*-
 """
-# csseventconverter.py 
-# -by Mark C. Williams (2013), Nevada Seismological Laboratory
-# 2013-2-13
-#
-# functions to map CSS3.0 to QuakeML schema
-# (obspy Event class which can write QuakeML XML)
-#
-# Required     'obspy'    ObsPy (version with event, quakeml support)
+csseventconverter.py
+
+    Mark C. Williams (2013)
+    Nevada Seismological Laboratory
+    2013-02-13
+
+    Converter class to map CSS3.0 to QuakeML schema
+    (converts to obspy Event class which can write QuakeML XML)
+
 
 Classes
 =======
-
 CSSEventConverter : methods to convert CSS to QuakeML schema
 
+Required
+--------
+'obspy' : ObsPy (version with event, quakeml support)
 
 """
 import math
-from quakeml import Pickler
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     EventDescription, OriginUncertainty, OriginQuality, CompositeTime,
@@ -26,12 +28,14 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     PrincipalAxes, Axis, NodalPlane, SourceTimeFunction, Tensor, DataUsed,
     ResourceIdentifier, StationMagnitudeContribution)
 
+
 def _utc(timestamp):
     """Returns the UTCDateTime"""
     try:
         return UTCDateTime(timestamp)
     except:
-        return None
+      return None
+
 
 def _str(item):
     """Return a string no matter what"""
@@ -40,6 +44,7 @@ def _str(item):
     else:
         return ''
 
+
 def _km2m(dist):
     """Convert from km to m only if dist is not None"""
     if dist is not None:
@@ -47,18 +52,22 @@ def _km2m(dist):
     else:
         return None
 
+
 def _m2deg_lat(dist):
     return dist / 110600.
+
 
 def _m2deg_lon(dist, lat=0.):
     M = 6367449.
     return dist / (math.pi / 180.) / M / math.cos(math.radians(lat))
 
+
 def _eval_ellipse(a, b, angle):
     return a*b/(math.sqrt((b*math.cos(math.radians(angle)))**2 +
                           (a*math.sin(math.radians(angle)))**2))
 
-def get_n_e_on_ellipse(A, B, strike):
+
+def _get_NE_on_ellipse(A, B, strike):
     """
     Return the solution for points N and E on an ellipse
     
@@ -94,22 +103,24 @@ class CSSEventConverter(object):
     get_event_type : static class method to convert CSS origin type flag
 
     """
-    #connection = None # DBAPI2 database connection
+    rid_factory = None # function(object, authority)
+    
     event   = None    # event instance
+    
     auth_id = 'local' # publicID, authority URL
     agency  = 'XX'    # agency ID, ususally net code
 
     @staticmethod 
-    def get_event_type(etype, emap_update=None):
+    def get_event_type(etype, etype_map=None):
         """
         Map a CSS3.0 etype origin flag to a QuakeML event type
         
-        Default dictionary will be updated by anything in 'emap_update'
+        Default dictionary will be updated by anything in 'etype_map'
 
         Inputs
         ------
         etype : str of a valid etype
-        emap_update : add/replace mappings to the standard css3.0 one
+        etype_map: dict of {etype: eventType} added to standard css3.0 one
 
         """
         event_type_map = {
@@ -122,10 +133,10 @@ class CSSEventConverter(object):
             'r'  : "earthquake",
             't'  : "earthquake",
             'f'  : "earthquake",
-        }
+            }
         # Add custom flags
-        if emap_update:
-            event_type_map.update(emap_update)
+        if etype_map:
+            event_type_map.update(etype_map)
         # Try to find a direct match, then check for stuff like 'LF'
         if etype.lower() in event_type_map:
             return event_type_map[etype.lower()]
@@ -141,25 +152,7 @@ class CSSEventConverter(object):
             for comm in origin.comments:
                 if 'etype' in comm.resource_id.resource_id:
                     etype = comm.text
-                    return cls.get_event_type(etype, emap_update=emap)
-    
-    @staticmethod
-    def extra_anss(**kwargs):
-        """
-        Create an dictionary for ANSS vars for use by event classes 'extra' attribute
-        
-        Inputs
-        ------
-        kwargs SHOULD be one of ('datasource','dataid','eventsource','eventid')
-        
-        Returns : dict of obspy 'extra' format
-
-        """
-        extra_attrib = {} 
-        ns_anss = ['catalog', 'http://anss.org/xmlns/catalog/0.1'] 
-        for a in kwargs:
-            extra_attrib[a] = {'value': kwargs[a],  '_namespace': ns_anss, '_type': 'attribute'}
-        return extra_attrib
+                    return cls.get_event_type(etype, etype_map=emap)
     
     @staticmethod
     def _create_dict(dbtuple, field):
@@ -176,7 +169,7 @@ class CSSEventConverter(object):
         """
         value = dbtuple.get(field)
         if value:
-            return { field : value }
+            return {field : value}
         else:
             return None
     
@@ -190,62 +183,64 @@ class CSSEventConverter(object):
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, ex_type, ex_value, ex_tb):
-        if hasattr(self.connection,'__exit__'): 
-            self.connection.__exit__(ex_type, ex_value, ex_tb)
-        else:
-            try:
-                self.connection.close()
-            except:
-                pass
-
     @property
     def _prefix(self):
         """Return a prefix for a custom RID"""
         return "smi:" +  self.auth_id
     
-    def _rid(self, obj):
+    def _rid(self, obj=None):
         """
-        Return generic unique ResourceID
+        Return unique ResourceID
         
-        With no pf or custom function available, will produce a 
+        With no custom function available, will produce a 
         ResourceIdentifier exactly like the ObsPy default for a
         QuakeML file.
 
         """
-        return ResourceIdentifier(prefix=self._prefix)
+        if self.rid_factory is None:
+            return ResourceIdentifier(prefix=self._prefix)
+        else:
+            return self.rid_factory(obj, self.auth_id)
     
     def _map_join2origin(self, db):
         """
-        Returns an Origin instance from a Dbtuple
+        Return an Origin instance from an dict of CSS key/values
         
         Inputs
-        ------
-        db :  dict of an origin-origerr joined record
+        ======
+        db : dict of key/values of CSS fields related to the origin (see Join)
 
-        Returns : obspy.core.event.Origin
+        Returns
+        =======
+        obspy.core.event.Origin
+
+        Notes
+        =====
+        Any object that supports the dict 'get' method can be passed as
+        input, e.g. OrderedDict, custom classes, etc.
+        
+        Join
+        ----
+        origin <- origerr (outer)
 
         """ 
 
         quality = OriginQuality(
             associated_phase_count = db.get('nass'),
-            used_phase_count       = db.get('ndef'),
-            standard_error         = db.get('sdobs'),
+            used_phase_count = db.get('ndef'),
+            standard_error = db.get('sdobs'),
             )
 
-        origin               = Origin()
-        origin.latitude      = db.get('lat')
-        origin.longitude     = db.get('lon')
-        origin.depth         = _km2m(db.get('depth'))
-        origin.time          = _utc(db.get('time'))
-        origin.quality       = quality
+        origin = Origin()
+        origin.latitude = db.get('lat')
+        origin.longitude = db.get('lon')
+        origin.depth = _km2m(db.get('depth'))
+        origin.time = _utc(db.get('time'))
+        origin.quality = quality
         origin.creation_info = CreationInfo(
             creation_time = _utc(db.get('lddate')),
-            agency_id     = self.agency, 
-            version       = db.get('orid'),
+            agency_id = self.agency, 
+            version = db.get('orid'),
             )
         
         # Solution Uncertainties
@@ -272,7 +267,7 @@ class CSSEventConverter(object):
 
         # Parameter Uncertainties 
         if all([a, b, s]):
-            n, e = get_n_e_on_ellipse(a, b, s)
+            n, e = _get_NE_on_ellipse(a, b, s)
             lat_u = _m2deg_lat(n)
             lon_u = _m2deg_lon(e, lat=origin.latitude)
             origin.latitude_errors = {'uncertainty': lat_u} 
@@ -284,31 +279,47 @@ class CSSEventConverter(object):
 
 
         if 'orbassoc' in _str(db.get('auth')):
-            origin.evaluation_mode   = "automatic"
+            origin.evaluation_mode = "automatic"
             origin.evaluation_status = "preliminary"
         else:
-            origin.evaluation_mode   = "manual"
+            origin.evaluation_mode = "manual"
             origin.evaluation_status = "reviewed"
         # Save etype in a comment due to schema differences...
         etype_comment = Comment(
             resource_id = ResourceIdentifier(self._prefix+"/comment/etype/"+_str(db.get('orid'))),
-            text        = _str(db.get('etype'))
+            text = _str(db.get('etype'))
             )
         origin.comments = [etype_comment]
         origin.resource_id = self._rid(origin)
         return origin
 
     def _map_netmag2magnitude(self, db):
-        """Get Magnitude from dict of a netmag record"""
+        """
+        Return an obspy Magnitude from an dict of CSS key/values
+        corresponding to one record.
+        
+        Inputs
+        ======
+        db : dict of key/values of CSS fields from the 'netmag' table
+
+        Returns
+        =======
+        obspy.core.event.Magnitude
+
+        Notes
+        =====
+        Any object that supports the dict 'get' method can be passed as
+        input, e.g. OrderedDict, custom classes, etc.
+        """
         m = Magnitude()
-        m.mag             = db.get('magnitude')
-        m.magnitude_type  = db.get('magtype')
-        m.station_count   = db.get('nsta')
-        m.creation_info   = CreationInfo(
+        m.mag = db.get('magnitude')
+        m.magnitude_type = db.get('magtype')
+        m.station_count = db.get('nsta')
+        m.creation_info = CreationInfo(
             creation_time = _utc(db.get('lddate')),
-            agency_id     = self.agency,
-            version       = db.get('magid'),
-            author        = db.get('auth'),
+            agency_id = self.agency,
+            version = db.get('magid'),
+            author = db.get('auth'),
             )
         if m.creation_info.author.startswith('orb'):
             m.evaluation_status = "preliminary"
@@ -318,15 +329,31 @@ class CSSEventConverter(object):
         return m
 
     def _map_origin2magnitude(self, db, mtype='ml'):
-        """Get Magnitude from dict of an origin record"""
+        """
+        Return an obspy Magnitude from an dict of CSS key/values
+        corresponding to one record.
+        
+        Inputs
+        ======
+        db : dict of key/values of CSS fields from the 'origin' table
+
+        Returns
+        =======
+        obspy.core.event.Magnitude
+
+        Notes
+        =====
+        Any object that supports the dict 'get' method can be passed as
+        input, e.g. OrderedDict, custom classes, etc.
+        """
         m = Magnitude()
-        m.mag             = db.get(mtype)
-        m.magnitude_type  = mtype 
-        m.creation_info   = CreationInfo(
+        m.mag = db.get(mtype)
+        m.magnitude_type = mtype 
+        m.creation_info = CreationInfo(
             creation_time = _utc(db.get('lddate')), 
-            agency_id     = self.agency,
-            version       = db.get('orid'),
-        	author        = db.get('auth'),
+            agency_id = self.agency,
+            version = db.get('orid'),
+        	author = db.get('auth'),
             )
         if m.creation_info.author.startswith('orb'):
             m.evaluation_status = "preliminary"
@@ -337,29 +364,39 @@ class CSSEventConverter(object):
 
     def _map_join2phase(self, db):
         """
-        Return an obspy Arrival and Pick from a Dbtuple
-        of records in an assoc-arrival join
+        Return an obspy Arrival and Pick from an dict of CSS key/values
+        corresponding to one record. See the 'Join' section for the implied
+        database table join expected.
         
         Inputs
-        ------
-        db : dict of database record
+        ======
+        db : dict of key/values of CSS fields related to the phases (see Join)
 
-        Returns : pick, arrival
-        -------
-            obspy.core.event.Pick
-            obspy.core.event.Arrival
+        Returns
+        =======
+        obspy.core.event.Pick, obspy.core.event.Arrival
 
+        Notes
+        =====
+        Any object that supports the dict 'get' method can be passed as
+        input, e.g. OrderedDict, custom classes, etc.
+        
+        Join
+        ----
+        assoc <- arrival <- affiliation (outer) <- schanloc [sta chan] (outer)
+        
         """
         p = Pick()
         p.time = _utc(db.get('time'))
         def_net = self.agency[:2].upper()
         css_sta = db.get('sta')
         css_chan = db.get('chan')
-        p.waveform_id = WaveformStreamID(station_code = db.get('fsta') or css_sta, 
-                                         channel_code = db.get('fchan') or css_chan,
-                                         network_code = db.get('snet') or def_net,
-                                         location_code = db.get('loc'),
-                                         )
+        p.waveform_id = WaveformStreamID(
+            station_code = db.get('fsta') or css_sta, 
+            channel_code = db.get('fchan') or css_chan,
+            network_code = db.get('snet') or def_net,
+            location_code = db.get('loc'),
+            )
         p.horizontal_slowness = db.get('slow')
         p.horizontal_slowness_errors = self._create_dict(db, 'delslo')
         p.backazimuth = db.get('azimuth')
@@ -425,7 +462,7 @@ class CSSEventConverter(object):
         assoc_str = _str(db.get('arid')) + '-' + _str(db.get('orid'))
         timedef_comment = Comment(
             resource_id = ResourceIdentifier(self._prefix + "/comment/timedef/" + assoc_str),
-            text        = _str(db.get('timedef'))
+            text = _str(db.get('timedef'))
             )
         a.comments = [timedef_comment]
         a.resource_id = self._rid(a)
@@ -433,7 +470,22 @@ class CSSEventConverter(object):
 
     def _map_fplane2focalmech(self, db):
         """
-        Maps fplane record to a FocalMechanism
+        Return an obspy FocalMechanism from an dict of CSS key/values
+        corresponding to one record. See the 'Join' section for the implied
+        database join expected.
+        
+        Inputs
+        ======
+        db : dict of key/values of CSS fields from the 'fplane' table
+
+        Returns
+        =======
+        obspy.core.event.FocalMechanism
+
+        Notes
+        =====
+        Any object that supports the dict 'get' method can be passed as
+        input, e.g. OrderedDict, custom classes, etc.
 
         """
         #
@@ -441,21 +493,21 @@ class CSSEventConverter(object):
         #       so no 'get' access for now...
         #
         fm = FocalMechanism()
-        
+
         nps = NodalPlanes()
-        #nps.nodal_plane_1 = NodalPlane(db.get('str1'), db.get('dip1'), db.get('rake1'))
-        #nps.nodal_plane_2 = NodalPlane(db.get('str2'), db.get('dip2'), db.get('rake2'))
-        nps.nodal_plane_1 = NodalPlane(db['str1'], db['dip1'], db['rake1'])
-        nps.nodal_plane_2 = NodalPlane(db['str2'], db['dip2'], db['rake2'])
-        
+        nps.nodal_plane_1 = NodalPlane(db.get('str1'), db.get('dip1'), db.get('rake1'))
+        nps.nodal_plane_2 = NodalPlane(db.get('str2'), db.get('dip2'), db.get('rake2'))
+        #nps.nodal_plane_1 = NodalPlane(db['str1'], db['dip1'], db['rake1'])
+        #nps.nodal_plane_2 = NodalPlane(db['str2'], db['dip2'], db['rake2'])
+
         nps.preferred_plane = 1
-        
+
         prin_ax = PrincipalAxes()
-        #prin_ax.t_axis = Axis(db.get('taxazm'),db.get('taxplg'))
-        #prin_ax.p_axis = Axis(db.get('paxazm'),db.get('paxplg'))
-        prin_ax.t_axis = Axis(db['taxazm'], db['taxplg'])
-        prin_ax.p_axis = Axis(db['paxazm'], db['paxplg'])
-        
+        prin_ax.t_axis = Axis(db.get('taxazm'),db.get('taxplg'))
+        prin_ax.p_axis = Axis(db.get('paxazm'),db.get('paxplg'))
+        #prin_ax.t_axis = Axis(db['taxazm'], db['taxplg'])
+        #prin_ax.p_axis = Axis(db['paxazm'], db['paxplg'])
+
         fm.nodal_planes = nps
         fm.principal_axes = prin_ax
 
@@ -469,7 +521,7 @@ class CSSEventConverter(object):
         
         fm.resource_id = self._rid(fm)
         return fm
-    
+
     def _origins(self, relation):
         """
         Return lists of obspy Origins from a Relation of records
@@ -480,7 +532,6 @@ class CSSEventConverter(object):
         relation : iterable sequence of dict-like database records
 
         Returns : list of obspy.core.event.Origin
-        -------
 
         """
         origins = []
@@ -522,6 +573,17 @@ class CSSEventConverter(object):
             fmlist.append(self._map_fplane2focalmech(fmline))
         return fmlist
 
+    @staticmethod
+    def _nearest_cities_description(nearest_string):
+        """
+        Return an EventDescription of type 'nearest cities'
+
+        Inputs
+        ------
+        nearest_string : str of decription for the text field
+        """
+        return EventDescription(nearest_string, "nearest cities")
+
     @property
     def catalog(self):
         """
@@ -531,26 +593,9 @@ class CSSEventConverter(object):
         c = Catalog(events=[self.event])
         c.creation_info = CreationInfo(
             creation_time = UTCDateTime(), 
-            agency_id     = self.agency,
-            version       = self.event.creation_info.version,
+            agency_id = self.agency,
+            version = self.event.creation_info.version,
             )
         c.resource_id = self._rid(c)
         return c
-
-    @staticmethod
-    def _qmls(c):
-        """
-        Writes Catalog object to QuakeML string
-
-        Inputs
-        ------
-        c : obspy.core.event.Catalog
-
-        Returns : str of QuakeML file contents
-
-        """
-        return Pickler().dumps(c)
-
-    def quakeml_str(self):
-        return self._qmls(self.catalog)
 

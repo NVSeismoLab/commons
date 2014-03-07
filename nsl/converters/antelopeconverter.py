@@ -1,7 +1,7 @@
-#    
+# -*- coding: utf-8 -*-
 """
 antelopeconverter.py 
- -by Mark C. Williams (2013), Nevada Seismological Laboratory
+    by Mark C. Williams (2013), Nevada Seismological Laboratory
 
 This module contains a class with methods to produce an 
 obspy.core.event.Event object from an Antelope database
@@ -17,13 +17,14 @@ Classes
 
 AntelopeEventConverter(database, perm, *args, **kwargs)
 
-
 """
 from numpy import array
 from obspy.core.util import gps2DistAzimuth
 from curds2 import connect, OrderedDictRow, NamedTupleRow
-from csseventconverter import CSSEventConverter
-from netops.util import azimuth2compass, add_quality_params_from_data
+from nsl.common.util import azimuth2compass
+from nsl.obspy.util import add_quality_params_from_data
+from nsl.antelope.converters.csseventconverter import CSSEventConverter
+from nsl.antelope.pf import get_pf
 
 
 class AntelopeEventConverter(CSSEventConverter):
@@ -34,14 +35,17 @@ class AntelopeEventConverter(CSSEventConverter):
     Attributes
     ----------
     connection : DBAPI2 Database Connection instance
-    
+    place_db : str of a dbname with places12 schema
+    emap : dict to store custom etype -> eventType mappings
+
     Methods
     -------
     get_origins    : return list of Origins from db
     get_magnitudes : return list of Magnitudes from db
     get_phases     : return lists of Pick/Arrivals from db
     get_focalmechs : return list of FocalMechanisms from db
-    
+    get_event      : build and return an Event
+
     Notes
     -----
     The four main 'get' methods (origin, mag, focalmech, and phases) contain
@@ -50,14 +54,47 @@ class AntelopeEventConverter(CSSEventConverter):
     database data.
     
     """
-    connection = None # DBAPI2 database connection
+    connection = None  # DBAPI2 database connection
+    
+    place_db = None  # for looking up nearest places
+    emap = {}  # for adding custom etypes
+    
+    @classmethod
+    def load_pf(cls, pfname='db2quakeml'):
+        try:
+            pf = get_pf(pfname)
+        except Exception:
+            pf = {}
+        finally:
+            cls.agency = pf.get('AGENCY_CODE', 'XX') 
+            cls.place_db = pf.get('PLACE_DB', None)
+            cls.auth_id = pf.get('authority', 'local')
+            cls.emap = pf.get('etypes',{})
+            del pf
 
-    def __init__(self, database, perm='r', *args, **kwargs):
+    def __init__(self, database, perm='r', **kwargs):
         """
         Initialize converter and connect to database
+        
+        Inputs
+        ======
+        database : str name of database
+        **kwargs : extra keyword args
+
+        kwargs
+        ------
+        perm : str of permissions ('r')
+        pf : str name of pf file containing settings ('db2quakeml')
 
         """
-        super(AntelopeEventConverter, self).__init__(*args, **kwargs)
+        # Load config using Antelope-style param file
+        if 'pf' in kwargs:
+            _pf = kwargs.pop('pf')
+        else:
+            _pf = 'db2quakeml'
+        self.load_pf(_pf)
+        
+        super(AntelopeEventConverter, self).__init__(**kwargs)
         self.connection = connect(database, perm, row_factory=OrderedDictRow)
         self.connection.CONVERT_NULL = True
     
@@ -96,8 +133,7 @@ class AntelopeEventConverter(CSSEventConverter):
         db = curs.fetchone()
         return db['evid']
     
-    @staticmethod
-    def get_nearest_city(latitude, longitude, database=None):
+    def get_nearest_event_description(self, latitude, longitude, database=None):
         """
         Get the nearest place to a lat/lon from a db with a 'places' table
 
@@ -111,8 +147,8 @@ class AntelopeEventConverter(CSSEventConverter):
 
         """
         if database is None:
-            return None
-        else:
+            database = self.place_db
+        try:
             curs = connect(database).cursor(row_factory=NamedTupleRow)
             nrecs = curs.execute.lookup(table='places')
             stats = array([gps2DistAzimuth(latitude, longitude, r.lat, r.lon) for r in curs])
@@ -124,24 +160,42 @@ class AntelopeEventConverter(CSSEventConverter):
             compass = azimuth2compass(backazi)
             place_info = {'distance': dist/1000., 'direction': compass, 'city': minrec.place, 'state': minrec.state}
             curs.close()
-            return  "{distance:0.1f} km {direction} of {city}, {state}".format(**place_info)
-    
+            s = "{distance:0.1f} km {direction} of {city}, {state}".format(**place_info)
+            return self._nearest_cities_description(s)
+        except:
+            return None
+
     def get_focalmechs(self, orid=None):
+        """
+        Returns FocalMechanism instances of an ORID
+        
+        Inputs
+        ------
+        orid : int of ORID
+
+        Returns
+        -------
+        list of obspy.core.event.FocalMechanisms
+
+        """
         cmd = ['dbopen fplane', 'dbsubset orid=={0}'.format(orid)]
         curs = self.connection.cursor()
         rec = curs.execute('process', [cmd] )
-        curs.CONVERT_NULL = False # Antelope schema bug - missing fplane NULLS
+        curs.CONVERT_NULL = False  # Antelope schema bug - missing fplane NULLS
         return self._focalmechs(curs)
 
     def get_origins(self, orid=None, evid=None):
         """
-        Returns Origin instances from an orid or evid
+        Returns Origin instances from an ORID or EVID
         
         Inputs
         ------
-        int of orid or evid
+        orid : int of ORID 
+        evid : int of EVID
 
-        Returns : list of obspy.core.event.Origin
+        Returns
+        -------
+        list of obspy.core.event.Origin
 
         """
         if orid is not None:
@@ -164,8 +218,12 @@ class AntelopeEventConverter(CSSEventConverter):
         ------
         orid : int of orid
 
-        Returns : list of obspy.core.event.Magnitude
-
+        Returns
+        -------
+        list of obspy.core.event.Magnitude
+        
+        Notes
+        -----
         Right now, looks in 'netmag', then 'origin', and assumes anything in netmag
         is in 'origin', that may or may not be true...
         """
@@ -260,12 +318,9 @@ class AntelopeEventConverter(CSSEventConverter):
         if 'event_type' in kwargs:
             self.event.event_type = kwargs['event_type']
         else:
-            self.event.event_type = self.origin_event_type(origin)
-        # Possible to pass anss extras directly as kwarg
-        if 'anss' in kwargs:
-            self.event.extra = self.extra_anss(**kwargs['anss']) 
+            self.event.event_type = self.origin_event_type(origin, emap=self.emap)
    
-    def build(self, **kwargs):
+    def get_event(self, **kwargs):
         """
         Creates an ObsPy Event object from an Antelope Datascope database
         
@@ -285,10 +340,10 @@ class AntelopeEventConverter(CSSEventConverter):
         Optional kwargs
         ---------------
         event_type : str of QuakeML accepted type of event
-        anss       : dict of key/values of ANSS QuakeML attributes
 
         """
         self._build(**kwargs)
+        return self.event
 
 
 #--- Main Functions -------------------------------------------------------
@@ -303,38 +358,5 @@ def db2event(database, *args, **kwargs):
     
     """
     with AntelopeEventConverter(database) as dbc:
-        dbc.build(*args, **kwargs)
-    return dbc.event
-
-def make_catalog(database, **kwargs):
-    """
-    Return an ObsPy Catalog object (eventParameter in QuakeML)
-    
-    This is a convenience function, just a Catalog wrapper which calls
-    the event method, puts it in a Catalog.events list, and just puts
-    a CreationInfo and ResourceIdentifier in there.
-    
-    Inputs
-    ------
-    database   : str or antelope.datascope.Dbptr to database
-    orid       : int of CSS3.0 Origin ID
-    origin     : bool of whether to include location / mag  (True)
-    phases     : bool of whether to include associated picks (False)
-    focals     : bool of whether to include focal mechansims (False)
-    
-    Optional kwargs
-    ---------------
-    event_type : str of QuakeML accepted type of event
-    anss       : dict of key/values of ANSS QuakeML attributes
-
-    Returns
-    -------
-    obspy.core.event.Catalog
-    
-    """
-    with AntelopeEventConverter(database) as dbc:
-        dbc.build(*args, **kwargs)
-        c = dbc.catalog
-    return c
-
-
+        ev = dbc.get_event(*args, **kwargs)
+    return ev

@@ -1,6 +1,4 @@
-#
-# Mark's port of netops rtapps to python
-#
+# -*- coding: utf-8 -*-
 """
 Nevada Seismological Lab - RTApps
 
@@ -22,12 +20,17 @@ import time
 import datetime
 import logging
 from antelope.orb import Orb
-from netops.antelope.util import __antelopeversion__
+from nsl.antelope.pf import get_pf
+from nsl.antelope.packets import Pkt
 
-if '5.3' in __antelopeversion__:
-    from antelope.Pkt import Packet as Pkt
-else:
-    from antelope.Pkt import Pkt
+# Set up logger for debug and real-time
+LOG = logging.getLogger(__name__)
+DEFAULT_LOG_LEVEL = logging.DEBUG
+try:
+    LOG.addHandler(logging.NullHandler())
+except:
+    logging.raiseExceptions = False
+    
 
 def _rt_print(packet_tuple):
     '''
@@ -39,6 +42,30 @@ def _rt_print(packet_tuple):
     '''
     print packet_tuple
     return 0
+
+
+def _add_stderr_log(logger=LOG, level=DEFAULT_LOG_LEVEL):
+    """
+    Setup a STDERR Handler for a given Logger.
+    
+    Inputs
+    ------
+    logger : logging.Logger instance
+    level : string of valid logging level ('DEBUG')
+    
+    -> contains one handler to log to stderr stream
+    -> Stream handler logging level specified by 'level'
+
+    """
+    # create console handler and set level
+    ch = logging.StreamHandler() # default stream=sys.stderr
+    ch.setLevel(level)
+    # create formatter
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # add formatter to ch
+    ch.setFormatter(formatter)
+    # add ch to logger
+    logger.addHandler(ch)
 
 
 class Rtapp(object):
@@ -71,55 +98,54 @@ class Rtapp(object):
               -> passing packet tuple to 'process' method
 
     '''
+    __version__ = '1.0.0-generic'
+    _pffilename = 'rtapp'
     orb     = None
     orbname = None
-    logger  = None
+    logger  = LOG
+    enable_log = False
+    log_level = DEFAULT_LOG_LEVEL
 
     filter_expressions = None
-    
-    def __init__(self, orbname=None, log_level='DEBUG'):
+   
+    @classmethod
+    def enable_logging(cls, level=logging.DEBUG):
+        cls.logger.setLevel(level)
+
+    @classmethod
+    def disable_logging(cls):
+        cls.logger.setLevel(logging.NOTSET)
+        
+    @classmethod
+    def log_to_stderr(cls, level=None):
+        """
+        Convenience method to add a handler to log to STDERR.
+
+        NOTE
+        ====
+        Logging must be enabled in constructor for messages to get sent!
+
+        """
+        if level is None:
+            level = cls.log_level
+        _add_stderr_log(logger=cls.logger, level=level)
+
+    def __init__(self, orbname=None, enable_log=False):
         """
         Constructor for rtapp process stub
         
         - Sets the name of the orb to be opened at runtime
-        - Sets up the logger using 'logging' (default STDERR)
 
         Input
         -----
         orbname   : string of orbname server:port
-        log_level : string of logging level ('DEBUG')
         
         """
-        self.orbname = orbname
-        self._init_log(level=log_level)
-    
-    def _init_log(self, level='DEBUG'):
-        """
-        Setup a logger.
-        
-        Inputs
-        ------
-        level : string of valid logging level ('DEBUG')
-        
-        Generates a logging.Logger available at the 'logger' attribute
-        -> contains one handler to log to stderr stream
-        -> Stream handler logging level specified by 'level'
-
-        """
-        # create logger
-        logger = logging.getLogger(self.__class__.__name__)
-        logger.setLevel(logging.DEBUG)
-        # create console handler and set level
-        ch = logging.StreamHandler() # default stream=sys.stderr
-        lvl = getattr(logging, level.upper())
-        ch.setLevel(lvl)
-        # create formatter
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        # add formatter to ch
-        ch.setFormatter(formatter)
-        # add ch to logger
-        logger.addHandler(ch)
-        self.logger = logger
+        # Check for None so these could be set at class level
+        if orbname is not None:
+            self.orbname = orbname
+        if enable_log:
+            self.enable_logging()
 
     def _open(self, orbname=None):
         """
@@ -184,22 +210,33 @@ class Rtapp(object):
         """
         return _rt_print(packet)
 
-    def run(self):
+    def run(self, enable_log=None):
         """
         Reap the orb and process the resulting tuple packet
 
         1) reap a packet tuple off the ORB
         2) check substrings in 'filter_expressions' against packet source name
         3) pass tuple of matching packets to 'process' method
-        4) ***NOT IMPLEMENTED*** put any packets returned from 'process' into ORB
+        4) put any packets returned from 'process' into ORB
         
         """
+        if enable_log is True:
+            # Turn on logging
+            # Must add a handler to see these messages!!!
+            self.enable_logging()
+        elif enable_log is False:
+            # Explicitly turn off
+            self.disable_logging()
+        else:
+            # Keep whatever logging was previously set up.
+            pass
+        
         # Startup
-        self.logger.info("STARTING RTAPP, CONNECTING TO {orb}... ".format(orb=self.orbname))
+        self.logger.info("STARTING {0}, CONNECTING TO {1}... ".format(
+            self.__class__.__name__, self.orbname))
         
         # Open orb connection
         self._open()
-        self.logger.info("Connected.")
         
         #
         # Main reaping loop
@@ -219,16 +256,40 @@ class Rtapp(object):
                 except Exception as e:
                     rc = 0 
                     self.logger.exception(e)
-                #todo: check if function returns a packet and try to put it into the orb
+                # Check if function returns a packet and...
+                # - Try to stuff packet and put in ORB
+                # - Try to delete any objects in Pkt to avoid cryptic Antelope warnings
                 if isinstance(rc, Pkt):
-                    (pkttype, pkt, pktsrcname,pktime) = rc.stuff()
+                    stuffed_pkt_tuple = rc.stuff() 
+                    (pkttype, pkt, pktsrcname, pkttime) = stuffed_pkt_tuple
                     nbytes = len(bytes(pkt))
-                    #try:
-                    #    self.orb.put(pktsrcname, pkttime, pkt, nbytes)
-                    #except Exception as e:
-                    #    self.logger.exception(e)
-            
+                    try:
+                        self.orb.put(pktsrcname, pkttime, pkt, nbytes)
+                        self.logger.info("Wrote packet to orb: {0}".format(pktsrcname))
+                    except Exception as e:
+                        self.logger.exception(e)
+                    finally:
+                        del rc
             time.sleep(0.5)
-
+    
+    @classmethod
+    def main(cls):
+        """
+        Main function to run as a script
+        """
+        if len(sys.argv) > 1:
+            ORB = sys.argv[1]
+        else:
+            pf = get_pf(cls._pffilename)
+            ORB = pf.get('ORB')
+        
+        rt = cls(orbname=ORB, enable_log=True)
+        rt.log_to_stderr()
+        try:
+            rt.run()
+        except Exception as e:
+            rt.logger.exception(e)
+            rt.logger.critical("Uncaught exception, exiting...")
+            sys.exit(1)
 
 

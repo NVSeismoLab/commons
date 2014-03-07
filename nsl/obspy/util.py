@@ -1,6 +1,4 @@
-#
-# Utilities for the netops package
-#
+# -*- coding: utf-8 -*-
 """
 util.py
 -by Mark C. Williams, (2013) Nevada Seismological Laboratory

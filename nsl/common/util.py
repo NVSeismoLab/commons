@@ -1,41 +1,13 @@
-#
-# Utilities for the netops package
-#
+# -*- coding: utf-8 -*-
 """
 util.py
 -by Mark C. Williams, (2013) Nevada Seismological Laboratory
 Utilities for the Network Operations python package
 
-This module provides:
-
-Attributes
-----------
-__antelopeversion__ : version of antelope currently sourced
-
-Classes
--------
-CharPkt : Antelope version agnostic-ish NSL Character packet class
-
-Functions
----------
-pfgetter : Antelope version agnostic pf loading fucntion
-aximuth2compass : get letter compass direction from a 0-360
-
 """
-import numpy as np
-import os
+import numpy as np #  Depricate
+import os  #  Deppricate
 
-__antelopeversion__ = os.environ.get('ANTELOPE', os.sep).split(os.sep)[-1]
-
-if '5.3' in __antelopeversion__:
-    from netops.packets.charpacket import CharPacket as CharPkt
-    from antelope.stock import pfread as pfgetter
-elif __antelopeversion__:
-    from netops.packets.charpkt import CharPkt
-    from antelope.stock import pfget as pfgetter
-else:
-    CharPkt = tuple
-    pfgetter = open
 
 def azimuth2compass(azimuth):
     """
@@ -68,6 +40,21 @@ def azimuth2compass(azimuth):
         needle = 'N'
     return needle
 
+
+#######################################################################
+# DEPRICATED - moved to other modules
+#######################################################################
+__antelopeversion__ = os.environ.get('ANTELOPE', os.sep).split(os.sep)[-1]
+
+if '5.3' in __antelopeversion__:
+    from nsl.antelope.packets.charpacket import CharPacket as CharPkt
+    from antelope.stock import pfread as pfgetter
+elif __antelopeversion__:
+    from nsl.antelope.packets.charpkt import CharPkt
+    from antelope.stock import pfget as pfgetter
+else:
+    CharPkt = tuple
+    pfgetter = open
 
 def _timedef(comments):
     """Return timedef from a list of comments"""

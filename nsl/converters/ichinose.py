@@ -1,4 +1,4 @@
-#
+# -*- coding: utf-8 -*-
 """
 # ichinose.py
 # -by Mark (2013), Nevada Seismological Laboratory

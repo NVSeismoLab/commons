@@ -1,4 +1,4 @@
-#
+
 # Utilities for the netops package
 #
 """
@@ -25,6 +25,12 @@ import os
 
 __antelopeversion__ = os.environ.get('ANTELOPE', os.sep).split(os.sep)[-1]
 
+
+
+
+#-------------------------------------------------------#
+# DEPRICATED, here for one version for backwards compat #
+#-------------------------------------------------------#
 if '5.3' in __antelopeversion__:
     from netops.packets.charpacket import CharPacket as CharPkt
     from antelope.stock import pfread as pfgetter
@@ -34,13 +40,5 @@ elif __antelopeversion__:
 else:
     CharPkt = tuple
     pfgetter = open
-
-
-def pf2json(pf):
-    """Convert ParameterFile objects to json"""
-    import json
-    # Quick check, depricate later
-    if '5.3' not in __antelopeversion__:
-        return None
-    return json.dumps(pf.pf2dict())
+#-------------------------------------------------------#
 
