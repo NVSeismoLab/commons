@@ -6,19 +6,29 @@
 #except ImportError:
 #    pass
 
-from numpy.distutils.core import setup
+from setuptools import setup
 
 ### Regular setup stuff ######################################################
 
-s_args = {'name'         : 'netops',
-          'version'      : '0.5.4',
-          'description'  : 'Network Operations utilities',
-          'author'       : 'Nevada Seismological Lab',
-          'url'          : 'https//github.com/NVSeismoLab',
-          'packages'     : ['netops', 'netops.converters', 'netops.packets','netops.util'],
-          'package_data' : {'netops': [] },
-          'ext_modules'  : [],
-          'install_requires': ['curds2', 'obspy'],
+s_args = {'name': 'nsl.common',
+          'version': '0.6.0',
+          'description': 'NSL Common libraries and utilities for Python',
+          'author': 'Nevada Seismological Lab',
+          'url': 'https//github.com/NVSeismoLab',
+          'packages': ['nsl',
+                       'nsl.common',
+                       'nsl.common.config',
+                       'nsl.antelope',
+                       'nsl.antelope.base',
+                       'nsl.antelope.packets',
+                       'nsl.antelope.pf',
+                       'nsl.antelope.util',
+                       'nsl.converters', 
+                       'nsl.obspy',
+                       'nsl.obspy.patches'
+                       'nsl.util'
+                       ],
+          'package_data': {'nsl': [] },
 }
 
 # Go
