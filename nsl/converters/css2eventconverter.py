@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-csseventconverter.py
+css2eventconverter.py
 
     Mark C. Williams (2013)
     Nevada Seismological Laboratory
@@ -12,7 +12,7 @@ csseventconverter.py
 
 Classes
 =======
-CSSEventConverter : methods to convert CSS to QuakeML schema
+CSSToEventConverter : methods to convert CSS to QuakeML schema
 
 Required
 --------
@@ -84,7 +84,7 @@ def _get_NE_on_ellipse(A, B, strike):
     return n, e
 
 
-class CSSEventConverter(object):
+class CSSToEventConverter(object):
     """
     Converter to build an ObsPy Event instance from CSS3.0 database
 

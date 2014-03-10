@@ -5,10 +5,6 @@ util.py
 Utilities for the Network Operations python package
 
 """
-import numpy as np #  Depricate
-import os  #  Deppricate
-
-
 def azimuth2compass(azimuth):
     """
     Return 1 of 8 compass directions from an azimuth in degrees from N
@@ -39,57 +35,4 @@ def azimuth2compass(azimuth):
     else:
         needle = 'N'
     return needle
-
-
-#######################################################################
-# DEPRICATED - moved to other modules
-#######################################################################
-__antelopeversion__ = os.environ.get('ANTELOPE', os.sep).split(os.sep)[-1]
-
-if '5.3' in __antelopeversion__:
-    from nsl.antelope.packets.charpacket import CharPacket as CharPkt
-    from antelope.stock import pfread as pfgetter
-elif __antelopeversion__:
-    from nsl.antelope.packets.charpkt import CharPkt
-    from antelope.stock import pfget as pfgetter
-else:
-    CharPkt = tuple
-    pfgetter = open
-
-def _timedef(comments):
-    """Return timedef from a list of comments"""
-    for c in comments:
-        if 'timedef' in c.resource_id.resource_id:
-            return c.text
-
-
-def add_quality_params_from_data(origin):
-    """Add OriginQuality data calculated from Origin Arrival info"""
-    azimuths =  {a.azimuth for a in origin.arrivals}
-    distances = {a.distance for a in origin.arrivals}
-    def_azis = {a.azimuth for a in origin.arrivals if _timedef(a.comments) == 'd'}
-    azi_a = np.array(list(azimuths))
-    dist_a = np.array(list(distances))
-    # Azimuthal gaps
-    azi_a.sort()
-    azi_a1 = np.roll(azi_a, -1)
-    azi_a1[-1] += 360
-    gaps = azi_a1 - azi_a
-    # Add to quality
-    if origin.quality:
-        origin.quality.associated_station_count = len(dist_a)
-        origin.quality.used_station_count = len(def_azis)
-        origin.quality.minimum_distance = dist_a.min()
-        origin.quality.maximum_distance = dist_a.max()
-        origin.quality.median_distance = np.median(dist_a)
-        origin.quality.azimuthal_gap = gaps.max()
-
-
-def pf2json(pf):
-    """Convert ParameterFile objects to json"""
-    import json
-    # Quick check, depricate later
-    if '5.3' not in __antelopeversion__:
-        return None
-    return json.dumps(pf.pf2dict())
 

@@ -25,20 +25,3 @@ import os
 
 __antelopeversion__ = os.environ.get('ANTELOPE', os.sep).split(os.sep)[-1]
 
-
-
-
-#-------------------------------------------------------#
-# DEPRICATED, here for one version for backwards compat #
-#-------------------------------------------------------#
-if '5.3' in __antelopeversion__:
-    from netops.packets.charpacket import CharPacket as CharPkt
-    from antelope.stock import pfread as pfgetter
-elif __antelopeversion__:
-    from netops.packets.charpkt import CharPkt
-    from antelope.stock import pfget as pfgetter
-else:
-    CharPkt = tuple
-    pfgetter = open
-#-------------------------------------------------------#
-

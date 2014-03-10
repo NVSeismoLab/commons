@@ -6,7 +6,7 @@ antelopeconverter.py
 This module contains a class with methods to produce an 
 obspy.core.event.Event object from an Antelope database
 
-It inherits from the CSSEventConverter, and uses the
+It inherits from the CSSToEventConverter, and uses the
 private conversion methods to map CSS to QuakeML.
 
 The "get_*" methods contain Antelope-specific database
@@ -15,7 +15,7 @@ commands to get the data out of your db tables.
 Classes
 =======
 
-AntelopeEventConverter(database, perm, *args, **kwargs)
+AntelopeToEventConverter(database, perm, *args, **kwargs)
 
 """
 from numpy import array
@@ -23,11 +23,11 @@ from obspy.core.util import gps2DistAzimuth
 from curds2 import connect, OrderedDictRow, NamedTupleRow
 from nsl.common.util import azimuth2compass
 from nsl.obspy.util import add_quality_params_from_data
-from nsl.converters.csseventconverter import CSSEventConverter
+from nsl.converters.css2eventconverter import CSSToEventConverter
 from nsl.antelope.pf import get_pf
 
 
-class AntelopeEventConverter(CSSEventConverter):
+class AntelopeToEventConverter(CSSToEventConverter):
     """
     Extracts data in CSS schema from Antelope Datascope database
     and converts to (QuakeML) schema ObsPy Event.
@@ -94,7 +94,7 @@ class AntelopeEventConverter(CSSEventConverter):
             _pf = 'db2quakeml'
         self.load_pf(_pf)
         
-        super(AntelopeEventConverter, self).__init__(**kwargs)
+        super(AntelopeToEventConverter, self).__init__(**kwargs)
         self.connection = connect(database, perm, row_factory=OrderedDictRow)
         self.connection.CONVERT_NULL = True
     
@@ -357,6 +357,6 @@ def db2event(database, *args, **kwargs):
     Returns : obspy.core.event.Event instance
     
     """
-    with AntelopeEventConverter(database) as dbc:
+    with AntelopeToEventConverter(database) as dbc:
         ev = dbc.get_event(*args, **kwargs)
     return ev

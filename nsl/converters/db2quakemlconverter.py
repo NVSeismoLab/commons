@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-quakemlconverter.py 
+db2quakemlconverter.py 
 
     Mark C. Williams (2013)
     Nevada Seismological Laboratory
 
-Contains methods to facilitate QuakeML generation including a factory function
-for ResourceIdentifiers, and methods to generate QuakeML filenames and ANSS
-attributes.
+Contains methods to facilitate QuakeML generation including a factory
+function for ResourceIdentifiers, and methods to generate QuakeML 
+filenames and ANSS attributes.
 
 
 Functions
@@ -22,18 +22,18 @@ quakeml_rid(converter, obj): ResourceIdentifier factory function
 
 Classes
 =======
-QuakemlConverter : converter class
+DBToQuakemlConverter : converter class
     
-    This QuakemlConverter class inherits from AntelopeEventConverter,
-    and contains methods to build an Event from an Antelope database
-    and write out a QuakeML string. See class docstring for details.
+ This DBToQuakemlConverter class inherits from AntelopeToEventConverter,
+ and contains methods to build an Event from an Antelope database
+ and write out a QuakeML string. See class docstring for details.
 
 """
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.event import (Event, CreationInfo, Magnitude,
                               ResourceIdentifier)
 from nsl.obspy.patches.quakeml import Pickler
-from nsl.converters.antelopeconverter import AntelopeEventConverter
+from nsl.converters.antelope2eventconverter import AntelopeToEventConverter
 
 
 def quakeml_rid(converter, obj, authority='local'):
@@ -82,7 +82,7 @@ def quakeml_rid(converter, obj, authority='local'):
     return ResourceIdentifier(ridstr)
 
 
-class QuakemlConverter(AntelopeEventConverter):
+class DBToQuakemlConverter(AntelopeToEventConverter):
     """
     Antelope -> Event converter with customizations for writing QuakeML files
     

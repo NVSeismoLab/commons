@@ -30,13 +30,3 @@ def get_pf(pfname):
         return stock.pfget(pfname)
     else:
         raise AttributeError("No pf function available")
-
-
-# TODO: refactor or eliminate this
-def pf2json(pf):
-    """Convert ParameterFile objects to json"""
-    import json
-    if '5.3' not in __antelopeversion__:
-        return None
-    return json.dumps(pf.pf2dict())
-
