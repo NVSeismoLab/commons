@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-nsl.antelope.converters
+nsl.converters
 
 NSL's converter classes
 
