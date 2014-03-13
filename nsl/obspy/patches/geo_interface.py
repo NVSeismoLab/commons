@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+"""
+nsl.obspy.patches.geo_interface
+
+This patches the __geo_interface__ into older versions of ObsPy.
+
+"""
 from __future__ import unicode_literals
 from future.builtins import str  # NOQA
 
@@ -103,14 +109,47 @@ def station__geo_interface__(self):
         }
     return {"type": "Feature", "properties": props, "geometry": point}
 
+
+def catalog__geo_interface__(self):
+    """
+    __geo_interface__ method for GeoJSON-type GIS protocol
+
+    :return: dict of valid GeoJSON
+
+    Reference
+    ---------
+    Python geo_interface specifications:
+    https://gist.github.com/sgillies/2217756
+    """
+    features = [e.__geo_interface__ for e in self.events]
+    return {"type": "FeatureCollection", "features": features}
+
+
+def network__geo_interface__(self):
+    """
+    __geo_interface__ method for GeoJSON-type GIS protocol
+
+    :return: dict of valid GeoJSON
+
+    Reference
+    ---------
+    Python geo_interface specifications:
+    https://gist.github.com/sgillies/2217756
+    """
+    features = [s.__geo_interface__ for s in self.stations]
+    return {"type": "FeatureCollection", "features": features}
+
+
 ##############################################################################
-# Patch
+# Patch for older ObsPy versions
 ##############################################################################
-from obspy.core.event import Event, Origin, CreationInfo, UTCDateTime, \
-    Magnitude
+from obspy.core.event import Event, Origin, Catalog
 from obspy.station import Station
+from obspy.network import Network
 
 Event.__geo_interface__ = property(event__geo_interface__)
 Origin.__geo_interface__ = property(origin__geo_interface__)
 Station.__geo_interface__ = property(station__geo_interface__)
+Catalog.__geo_interface__ = property(catalog__geo_interface__)
+Network.__geo_interface__ = property(network__geo_interface__)
 
