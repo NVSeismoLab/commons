@@ -36,3 +36,24 @@ def azimuth2compass(azimuth):
         needle = 'N'
     return needle
 
+
+def pnpoly(vertx, verty, testx, testy):
+    """
+    Check for point in polygon
+
+    Citation
+    --------
+    Point inclusion in polygon test
+    W. Randolph Franklin
+    www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+    """
+    c = False
+    nvert = len(vertx)    
+    j = nvert-1
+    for i in range(nvert):
+        if ( ((verty[i]>testy) != (verty[j]>testy)) and 
+           (testx < (vertx[j]-vertx[i]) * (testy-verty[i]) / (verty[j]-verty[i]) + vertx[i]) ):
+            c = not c
+        j = i
+    return c
+
