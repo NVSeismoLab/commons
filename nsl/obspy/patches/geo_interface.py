@@ -106,6 +106,8 @@ def station__geo_interface__(self):
         "end_date": times.get('end_date'),
         "creation_date": times.get('creation_date'),
         "termination_date": times.get('termination_date'),
+        "description": self.description,
+        "alternate_code": self.alternate_code,
         }
     return {"type": "Feature", "properties": props, "geometry": point}
 
@@ -144,8 +146,7 @@ def network__geo_interface__(self):
 # Patch for older ObsPy versions
 ##############################################################################
 from obspy.core.event import Event, Origin, Catalog
-from obspy.station import Station
-from obspy.network import Network
+from obspy.station import Station, Network
 
 Event.__geo_interface__ = property(event__geo_interface__)
 Origin.__geo_interface__ = property(origin__geo_interface__)
