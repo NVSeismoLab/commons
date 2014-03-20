@@ -1,0 +1,53 @@
+# Packet content for ORB character packets with a given subcode
+#
+subcode_content:
+    event_new: &ev1
+        - evid
+        - orid
+        - mag
+        - time
+        - srcdb
+        - snapdb
+    event_pre: *ev1
+    event_hypo: *ev1
+    event_delete: &ev2
+        - evid
+        - orid
+    event_old: *ev2
+    event_mark_reviewed: &n
+        - null
+    db2shakemap_pre: *n
+    rttimer_sync:
+        - interval
+    rtweb_delete: *n
+    rtweb_new: *n
+    rtweb_new-external: *n
+    rtweb_pre: *n
+    rtweb_pre-external: *n
+    rtweb_sync:
+        - time
+    reporter_hypo: *n
+    reporter_hypo-external: *n
+    reporter_new: *n
+    reporter_new-external: *n
+    reporter_pre: *n
+    reporter_pre-external: *n
+    reporter_delete: *ev2
+    rt_hazus_pre: *n
+    rtfocalmech_pre: *n
+    mw_new: *n
+    mw_pre: *n
+    mw_publish:
+        - mt
+
+# Map these to non-string types when unpickling to a dict
+#
+int_types:
+    - evid
+    - orid
+    - interval
+
+float_types:
+    - mag
+    - time
+
