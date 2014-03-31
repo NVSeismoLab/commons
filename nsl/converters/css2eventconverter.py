@@ -29,6 +29,9 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     ResourceIdentifier, StationMagnitudeContribution)
 
 
+CSS_NAMESPACE = ('css',"http://www.seismo.unr.edu/schema/css3.0")
+
+
 def _utc(timestamp):
     """Returns the UTCDateTime"""
     try:
@@ -147,12 +150,12 @@ class CSSToEventConverter(object):
     
     @classmethod
     def origin_event_type(cls, origin, emap=None):
-        """Return a proper event_type from a CSS3.0 etype flag stored in an origin Comment"""
-        if origin.comments:
-            for comm in origin.comments:
-                if 'etype' in str(comm.resource_id):
-                    etype = comm.text
-                    return cls.get_event_type(etype, etype_map=emap)
+        """Return a proper event_type from a CSS3.0 etype flag stored in an origin"""
+        if hasattr(origin, 'extra') and 'etype' in origin.extra:
+            etype = origin.extra['etype']['value']
+            return cls.get_event_type(etype, etype_map=emap)
+        else:
+            return "not reported"
     
     @staticmethod
     def _create_dict(dbtuple, field):
@@ -195,7 +198,6 @@ class CSSToEventConverter(object):
         With no custom function available, will produce a 
         ResourceIdentifier exactly like the ObsPy default for a
         QuakeML file.
-
         """
         if self.rid_factory is None:
             return ResourceIdentifier(prefix=self._prefix)
@@ -224,26 +226,28 @@ class CSSToEventConverter(object):
         origin <- origerr (outer)
 
         """ 
-
-        quality = OriginQuality(
-            associated_phase_count = db.get('nass'),
-            used_phase_count = db.get('ndef'),
-            standard_error = db.get('sdobs'),
-            )
-
+        #-- Basic location ------------------------------------------
         origin = Origin()
         origin.latitude = db.get('lat')
         origin.longitude = db.get('lon')
         origin.depth = _km2m(db.get('depth'))
         origin.time = _utc(db.get('time'))
-        origin.quality = quality
         origin.creation_info = CreationInfo(
             creation_time = _utc(db.get('lddate')),
             agency_id = self.agency, 
             version = db.get('orid'),
             )
+        origin.extra = {}
         
-        # Solution Uncertainties
+        #-- Quality -------------------------------------------------
+        quality = OriginQuality(
+            associated_phase_count = db.get('nass'),
+            used_phase_count = db.get('ndef'),
+            standard_error = db.get('sdobs'),
+            )
+        origin.quality = quality
+
+        #-- Solution Uncertainties ----------------------------------
         # in CSS the ellipse is projected onto the horizontal plane
         # using the covariance matrix
         uncertainty = OriginUncertainty()
@@ -265,7 +269,7 @@ class CSSToEventConverter(object):
         if uncertainty.horizontal_uncertainty is not None:
             origin.origin_uncertainty = uncertainty
 
-        # Parameter Uncertainties 
+        #-- Parameter Uncertainties ---------------------------------
         if all([a, b, s]):
             n, e = _get_NE_on_ellipse(a, b, s)
             lat_u = _m2deg_lat(n)
@@ -277,19 +281,22 @@ class CSSToEventConverter(object):
         if time_u:
             origin.time_errors = {'uncertainty': time_u}
 
-
+        #-- Analyst-determined Status -------------------------------
         if 'orbassoc' in _str(db.get('auth')):
             origin.evaluation_mode = "automatic"
             origin.evaluation_status = "preliminary"
         else:
             origin.evaluation_mode = "manual"
             origin.evaluation_status = "reviewed"
-        # Save etype in a comment due to schema differences...
-        etype_comment = Comment(
-            resource_id = ResourceIdentifier(self._prefix+"/comment/etype/"+_str(db.get('orid'))),
-            text = _str(db.get('etype'))
-            )
-        origin.comments = [etype_comment]
+        # Save etype per origin due to schema differences...
+        css_etype = _str(db.get('etype'))
+        # Compatible with future patch rename "_namespace" -> "namespace"
+        origin.extra['etype'] = {
+            'value': css_etype, 
+            '_namespace': CSS_NAMESPACE,
+            'namespace': CSS_NAMESPACE
+            }
+
         origin.resource_id = self._rid(origin)
         return origin
 
@@ -441,7 +448,6 @@ class CSSToEventConverter(object):
 
         p.resource_id = self._rid(p)
 
-        # Now do the arrival
         a = Arrival()
         a.pick_id = ResourceIdentifier(str(p.resource_id), referred_object=p)
         a.phase = db.get('phase')
@@ -458,13 +464,22 @@ class CSSToEventConverter(object):
             creation_time = _utc(db.get('lddate')),
             agency_id = self.agency,
             )
+        a.extra = {}
+        timedef = _str(db.get('timedef'))
         # Save timedef in a comment due to schema differences...
+        # TODO: DEPRICATE ---------------------------------------->>>
         assoc_str = _str(db.get('arid')) + '-' + _str(db.get('orid'))
         timedef_comment = Comment(
             resource_id = ResourceIdentifier(self._prefix + "/comment/timedef/" + assoc_str),
-            text = _str(db.get('timedef'))
+            text = timedef
             )
         a.comments = [timedef_comment]
+        #--------------------------------------------------------->>>
+        a.extra['timedef'] = {
+            'value': timedef, 
+            '_namespace': CSS_NAMESPACE,
+            'namespace': CSS_NAMESPACE
+            }
         a.resource_id = self._rid(a)
         return p, a
 
@@ -490,23 +505,18 @@ class CSSToEventConverter(object):
         """
         #
         # NOTE: Antelope schema for this is wrong, no nulls defined
-        #       so no 'get' access for now...
-        #
+        # 
         fm = FocalMechanism()
 
         nps = NodalPlanes()
         nps.nodal_plane_1 = NodalPlane(db.get('str1'), db.get('dip1'), db.get('rake1'))
         nps.nodal_plane_2 = NodalPlane(db.get('str2'), db.get('dip2'), db.get('rake2'))
-        #nps.nodal_plane_1 = NodalPlane(db['str1'], db['dip1'], db['rake1'])
-        #nps.nodal_plane_2 = NodalPlane(db['str2'], db['dip2'], db['rake2'])
 
         nps.preferred_plane = 1
 
         prin_ax = PrincipalAxes()
         prin_ax.t_axis = Axis(db.get('taxazm'),db.get('taxplg'))
         prin_ax.p_axis = Axis(db.get('paxazm'),db.get('paxplg'))
-        #prin_ax.t_axis = Axis(db['taxazm'], db['taxplg'])
-        #prin_ax.p_axis = Axis(db['paxazm'], db['paxplg'])
 
         fm.nodal_planes = nps
         fm.principal_axes = prin_ax

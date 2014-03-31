@@ -133,10 +133,14 @@ class DBToQuakemlConverter(AntelopeToEventConverter):
         Returns : dict of obspy 'extra' format
 
         """
+        # _namespace renamed to namespace in new "extra" patch, use both for now
         extra_attrib = {} 
         ns_anss = ['catalog', 'http://anss.org/xmlns/catalog/0.1'] 
         for a in kwargs:
-            extra_attrib[a] = {'value': kwargs[a],  '_namespace': ns_anss, '_type': 'attribute'}
+            extra_attrib[a] = {'value': kwargs[a],
+                               'namespace': ns_anss, 
+                               '_namespace': ns_anss, 
+                               '_type': 'attribute'}
         return extra_attrib
 
     def build(self, evid=None, orid=None, delete=False, phase_data=False, focal_data=False):
