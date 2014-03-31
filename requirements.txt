@@ -1,8 +1,15 @@
 #
 # Installs requirements
 #
+# antelope -> for antelope stuff and converters
+# obspy -> for obspy stuff and converters
+# numpy -> for some utils
 
+# Need YAML for configs (installed by Salt)
+PyYAML
 
-obspy
+# DBAPI2 to use with Antelope:
 git+https://github.com/NVSeismoLab/curds2.git#egg=curds2
 
+# FUTURE
+# pyzmq (installed by Salt)
