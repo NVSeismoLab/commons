@@ -7,42 +7,45 @@ all tests yet, so, here be dragons.
 
 The following sub-packages are available:
 
-common
-------
-Common functions and libs for all programs
-(Attempt at standardizing calls for basic things)
-* configuration files
-* utilities
-
-antelope
---------
-Utilities for Antelope (expand)
-* base classes
-* packets
-* pf functions
-* general utils
-
-converters
+nsl.common
 ----------
-Conversion classes, work in progress
-(Mostly for QuakeML conversion)
-* CSS -> obspy Event
-* Antelope DB -> obspy Event
-* DB -> QuakeML
-* Ichinose MT output -> obspy Event
+Common functions and libs for all programs
 
-obspy
------
-Utilites for obspy
-* patches
+* `config` - configuration files
+* `util` - utilities
 
-scripts
--------
-Bin directory for executables
-(Stub for now)
+nsl.antelope
+------------
+Utilities for using Antelope
 
-util
-----
+* `base` - base classes
+* `packets` - various ORB packets
+* `pf` - standardized pf functions
+* `util` - general utils
+
+nsl.converters
+--------------
+Conversion classes, work in progress (Mostly for QuakeML conversion)
+
+* `CSSToEventConverter`
+* `AntelopeToEventConverter`
+* `DBToQuakeMLConverter`
+* `ichinose` - functions to convert MT output
+* `db2qml` - custom Converter for scripts/command line
+
+nsl.obspy
+---------
+Utilites for using ObsPy
+
+* `patches` - patches for new features and older versions
+* `util` - add-on utilities for using ObsPy with itself
+
+nsl.scripts
+-----------
+* `db2quakeml` - CLI script for converting CSS flat text file to QuakeML
+
+nsl.util
+--------
 Package-wide utilities
 (Stub/backwards compat for now)
 

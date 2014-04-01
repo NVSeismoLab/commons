@@ -1,45 +1,42 @@
+#
 # Packet content for ORB character packets with a given subcode
 #
+EVENT1: &ev1 [evid, orid, mag, time, srcdb, snapdb]
+EVENT2: &ev2 [evid, orid]
+EVENT3: &ev3 [evid, orid, mag, srcdb, snapdb]
+UNKNOWN: &n [null]
+
 subcode_content:
-    event_new: &ev1
-        - evid
-        - orid
-        - mag
-        - time
-        - srcdb
-        - snapdb
+    event_new: *ev1
     event_pre: *ev1
     event_hypo: *ev1
-    event_delete: &ev2
-        - evid
-        - orid
+    event_delete: *ev2 
     event_old: *ev2
-    event_mark_reviewed: &n
-        - null
-    db2shakemap_pre: *n
-    rttimer_sync:
-        - interval
-    rtweb_delete: *n
-    rtweb_new: *n
-    rtweb_new-external: *n
-    rtweb_pre: *n
-    rtweb_pre-external: *n
+    event_mark_reviewed: *ev2
+    reporter_hypo: *ev3 
+    reporter_hypo-external: *ev3 
+    reporter_new: *ev3
+    reporter_new-external: *ev3
+    reporter_pre: *ev3
+    reporter_pre-external: *ev3
+    reporter_delete: *ev2
+    rtweb_delete: *ev2
+    rtweb_new: *ev3
+    rtweb_new-external: *ev3
+    rtweb_pre: *ev3
+    rtweb_pre-external: *ev3
     rtweb_sync:
         - time
-    reporter_hypo: *n
-    reporter_hypo-external: *n
-    reporter_new: *n
-    reporter_new-external: *n
-    reporter_pre: *n
-    reporter_pre-external: *n
-    reporter_delete: *ev2
+    rttimer_sync:
+        - interval
+    db2shakemap_pre: *ev3
     rt_hazus_pre: *n
     rtfocalmech_pre: *n
-    mw_new: *n
-    mw_pre: *n
+    mw_new: *ev3
+    mw_pre: *ev3
     mw_publish:
         - mt
-
+#
 # Map these to non-string types when unpickling to a dict
 #
 int_types:
