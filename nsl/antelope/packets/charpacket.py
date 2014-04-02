@@ -8,8 +8,9 @@ Character packet class used by NSL for message passing in ORBs
 
 """
 from antelope.Pkt import Packet
-from packet_conf import (subcode_content, int_types as INT_TYPES,
-                         float_types as FLOAT_TYPES)
+from nsl.antelope.packets.packet_conf import (
+    subcode_content, int_types as INT_TYPES, float_types as FLOAT_TYPES
+    )
 
 def _entype(key, value, int_types=INT_TYPES, float_types=FLOAT_TYPES):
     """
@@ -129,7 +130,7 @@ class CharPacket(Packet):
             if pkt_code in subcode_content:
                 labels = subcode_content[pkt_code]
             else:
-                labels = content.iterkeys()
+                labels = list(content.keys())
             pickle = separator.join([str(content[key]) for key in labels])
         
         elif isinstance(content, list) or isinstance(content, tuple):
