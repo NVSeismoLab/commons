@@ -144,7 +144,7 @@ class CSSToEventConverter(object):
         if etype.lower() in event_type_map:
             return event_type_map[etype.lower()]
         else:
-            for k,v in event_type_map.iteritems():
+            for k,v in event_type_map.items():
                 if k in etype.lower():
                     return v
     

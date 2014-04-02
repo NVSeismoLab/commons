@@ -72,7 +72,7 @@ class Parser(object):
         exp_str = line1.pop(-1)
         exp = int(exp_str.split('=')[1]) - 7 # N-m
         mt = dict(m.split('=') for m in line1)
-        for k, v in mt.iteritems():
+        for k, v in mt.items():
             mt[k] = float(v) * 10**exp
         return mt
 
