@@ -109,8 +109,6 @@ def station__geo_interface__(self):
         "termination_date": times.get('termination_date'),
         "description": self.description,
         "channels": channels,
-        "site": self.site,
-        "operators": self.operators,
         "alternate_code": self.alternate_code,
         "historical_code": self.historical_code,
         }
