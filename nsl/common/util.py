@@ -5,6 +5,12 @@ util.py
 Utilities for the Network Operations python package
 
 """
+def rget(dict_, *args):
+    """Recursive get method fxn for nested dicts"""
+    for k in args:
+        dict_ = dict_.get(k, dict())
+    return dict_ or None
+
 def azimuth2compass(azimuth):
     """
     Return 1 of 8 compass directions from an azimuth in degrees from N

@@ -95,6 +95,7 @@ def station__geo_interface__(self):
     times = dict([(a, str(getattr(self, a))) for a in ('start_date',
                  'end_date', 'creation_date', 'termination_date')
                  if getattr(self, a) is not None])
+    channels = [c.code for c in self.channels]
 
     point = {
         "type": "Point",
@@ -107,7 +108,11 @@ def station__geo_interface__(self):
         "creation_date": times.get('creation_date'),
         "termination_date": times.get('termination_date'),
         "description": self.description,
+        "channels": channels,
+        "site": self.site,
+        "operators": self.operators,
         "alternate_code": self.alternate_code,
+        "historical_code": self.historical_code,
         }
     return {"type": "Feature", "properties": props, "geometry": point}
 
@@ -146,7 +151,7 @@ def network__geo_interface__(self):
 # Patch for older ObsPy versions
 ##############################################################################
 from obspy.core.event import Event, Origin, Catalog
-from obspy.station import Station, Network
+from obspy.station import Station, Network, Channel
 
 Event.__geo_interface__ = property(event__geo_interface__)
 Origin.__geo_interface__ = property(origin__geo_interface__)
