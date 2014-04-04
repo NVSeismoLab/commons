@@ -8,8 +8,11 @@ Utilities for the Network Operations python package
 def rget(dict_, *args):
     """Recursive get method fxn for nested dicts"""
     for k in args:
-        dict_ = dict_.get(k, dict())
-    return dict_ or None
+        try:
+            dict_ = dict_.get(k)
+        except AttributeError:
+            dict_ = dict()
+    return dict_
 
 def azimuth2compass(azimuth):
     """
