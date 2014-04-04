@@ -11,7 +11,7 @@ def rget(dict_, *args):
         try:
             dict_ = dict_.get(k)
         except AttributeError:
-            dict_ = dict()
+            return None
     return dict_
 
 def azimuth2compass(azimuth):
