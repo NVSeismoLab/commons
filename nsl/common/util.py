@@ -5,9 +5,9 @@ util.py
 Utilities for the Network Operations python package
 
 """
-def rget(dict_, *args):
+def rget(dict_, *keys):
     """Recursive get method fxn for nested dicts"""
-    for k in args:
+    for k in keys:
         try:
             dict_ = dict_.get(k)
         except AttributeError:
