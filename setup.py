@@ -4,7 +4,7 @@
 from setuptools import setup
 
 s_args = {'name': 'nsl.common',
-          'version': '0.7.2',
+          'version': '0.8.0',
           'description': 'NSL Common libraries and utilities for Python',
           'author': 'Nevada Seismological Lab',
           'url': 'https//github.com/NVSeismoLab',
