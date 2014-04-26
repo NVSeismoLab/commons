@@ -198,7 +198,7 @@ class Rtapp(object):
         else:
             return True
 
-    def process(self, packet):
+    def process(self, packettuple):
         """
         Process packet tuple and return integer or packet
 
@@ -208,7 +208,16 @@ class Rtapp(object):
         (this default simply prints the packet)
 
         """
-        return _rt_print(packet)
+        return _rt_print(packettuple)
+    
+    def ship(self, packet):
+        """
+        Receive packet class and stuff/put it into queue
+        """
+        (pkttype, pkt, pktsrcname, pkttime) = packet.stuff()
+        nbytes = len(bytes(pkt))
+        self.orb.put(pktsrcname, pkttime, pkt, nbytes)
+        self.logger.info("Wrote packet to orb: {0}".format(pktsrcname))
 
     def run(self, enable_log=None):
         """
@@ -252,27 +261,14 @@ class Rtapp(object):
             time.sleep(0.5)  # wait half a sec for a KeyboardInterrupt
             if self.filter_packet(p):
                 try:
-                    rc = self.process(p)
+                    reply = self.process(p)
+                    if isinstance(reply, Pkt):
+                        self.ship(reply)
                 except Exception as e:
-                    rc = 0
+                    reply = 0
                     self.logger.exception(e)
-                # Check if function returns a packet and...
-                # - Try to stuff packet and put in ORB
-                # - Delete any objects in Pkt to avoid cryptic warnings
-                if isinstance(rc, Pkt):
-                    stuffed_pkt_tuple = rc.stuff()
-                    (pkttype, pkt, pktsrcname, pkttime) = stuffed_pkt_tuple
-                    nbytes = len(bytes(pkt))
-                    try:
-                        self.orb.put(pktsrcname, pkttime, pkt, nbytes)
-                        self.logger.info(
-                            "Wrote packet to orb: {0}".format(pktsrcname)
-                            )
-                    except Exception as e:
-                        self.logger.exception(e)
-                    finally:
-                        del rc
-            time.sleep(0.5)
+                finally:
+                    del reply
 
     @classmethod
     def main(cls):
