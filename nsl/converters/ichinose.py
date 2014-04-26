@@ -165,7 +165,7 @@ class Parser(object):
         '''
         pass
 
-class IchinoseToEventConveter(object):
+class IchinoseToEventConverter(object):
     """
     Class to mimic QuakeML conveters for the text output of the Ichinose code
     'Ichinose to QuakeML schema' conveter
