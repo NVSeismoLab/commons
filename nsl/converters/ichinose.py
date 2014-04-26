@@ -23,8 +23,6 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     ResourceIdentifier, StationMagnitudeContribution)
 
 
-def rid(*args):
-    return ResourceIdentifier(prefix='smi:local')
 
 class Parser(object):
     '''
@@ -173,10 +171,24 @@ class IchinoseToEventConveter(object):
     'Ichinose to QuakeML schema' conveter
     """
     event = None
+    rid_factory = None
 
-    def __init__(self, filehandle, rid_factory=rid):
+    def _rid(self, obj=None):
+        """
+        Return unique ResourceID
+        
+        With no custom function available, will produce a 
+        ResourceIdentifier exactly like the ObsPy default for a
+        QuakeML file.
+        """
+        if self.rid_factory is None:
+            return ResourceIdentifier(prefix="smi:local")
+        else:
+            return self.rid_factory(obj)
+
+    def __init__(self, filehandle, rid_factory=None):
         self.parser = Parser(filehandle)
-        self.rid_factory = classmethod(rid_factory)
+        self.rid_factory = rid_factory
     
     def build(self):
         """
@@ -271,7 +283,7 @@ class IchinoseToEventConveter(object):
         magnitude.evaluation_mode = ev_mode
         magnitude.evaluation_status = ev_stat
         magnitude.creation_info = creation_info.copy()
-        magnitude.resource_id = self.rid_factory(magnitude)
+        magnitude.resource_id = self._rid(magnitude)
         # Stub origin
         origin.time = ev.get('time')
         origin.latitude = ev.get('lat')
@@ -280,7 +292,7 @@ class IchinoseToEventConveter(object):
         origin.depth_type = "from moment tensor inversion"
         origin.creation_info = creation_info.copy()
          # Unique from true origin ID
-        _oid = self.rid_factory(origin)
+        _oid = self._rid(origin)
         origin.resource_id = ResourceIdentifier(_oid.resource_id + '/mt')
         del _oid
         # Make an id for the MT that references this origin
@@ -296,13 +308,13 @@ class IchinoseToEventConveter(object):
         moment_tensor.moment_magnitude_id = mmid
         moment_tensor.derived_origin_id = doid
         moment_tensor.creation_info = creation_info.copy()
-        moment_tensor.resource_id = self.rid_factory(moment_tensor)
+        moment_tensor.resource_id = self._rid(moment_tensor)
         # Fill in focal_mech values
         focal_mech.nodal_planes  = nodal_planes
         focal_mech.moment_tensor = moment_tensor
         focal_mech.principal_axes = principal_ax
         focal_mech.creation_info = creation_info.copy()
-        focal_mech.resource_id = self.rid_factory(focal_mech)
+        focal_mech.resource_id = self._rid(focal_mech)
         # add mech and new magnitude to event
         event.focal_mechanisms = [focal_mech]
         event.magnitudes = [magnitude]
@@ -313,7 +325,7 @@ class IchinoseToEventConveter(object):
         event.preferred_focal_mechanism_id = focal_mech.resource_id.resource_id
         if evid:
             event.creation_info.version = evid
-        event.resource_id = self.rid_factory(event)
+        event.resource_id = self._rid(event)
         self.event = event
 
     def get_event(self):
@@ -322,7 +334,7 @@ class IchinoseToEventConveter(object):
         return self.event
 
 
-def mt2event(filehandle, quakeml_rid=rid):
+def mt2event(filehandle, quakeml_rid=None):
     """
     Return an Event from an Ichinose MT text file
     """
