@@ -102,7 +102,7 @@ class Converter(DBToQuakemlConverter):
             self.event.resource_id = self._rid(self.event)
         elif mt:
         # 2. Make a custom event (mt is a special-formatted text file)
-            self.event = mt2event(mt, quakeml_rid=self.quakeml_rid)
+            self.event = mt2event(mt, quakeml_rid=custom_rid)
         # 3. Use EventBuilder to get Event from the db
         else:
             self._build(orid=orid, phases=phase_data, focals=focal_data, event_type="not reported")
