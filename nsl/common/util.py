@@ -57,3 +57,12 @@ def pnpoly(vertx, verty, testx, testy):
         j = i
     return c
 
+
+def rget(dict_, *keys):
+    """Recursive get method fxn for nested dicts"""
+    for k in keys:
+        try:
+            dict_ = dict_.get(k)
+        except AttributeError:
+            return None
+    return dict_

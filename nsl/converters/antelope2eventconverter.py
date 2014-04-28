@@ -227,23 +227,21 @@ class AntelopeToEventConverter(CSSToEventConverter):
         Right now, looks in 'netmag', then 'origin', and assumes anything in netmag
         is in 'origin', that may or may not be true...
         """
-        # FUTURE: Possibly implement as outer join netmag to origin and THEN
-        #         check for magid/magnitude - else try ml/mb/ms
         mags = []
         substr = 'dbsubset orid=={0}'.format(orid)
-        curs = self.connection.cursor()
         # 1. Check netmag table
-        rec = curs.execute('process', (['dbopen netmag', substr],) )
+        curs = self.connection.cursor()
+        rec = curs.execute('process', [('dbopen netmag', substr)] )
         if rec:
-            for db in curs:
-                mags.append(self._map_netmag2magnitude(db))
-        else:
-            # 2. Check the origin table for the 3 types it holds
-            rec = curs.execute('process', (['dbopen origin', substr],) )
+            mags += [self._map_netmag2magnitude(db) for db in curs]
+            return mags
+        # 2. Check the origin table for the 3 types it holds
+        curs = self.connection.cursor()
+        rec = curs.execute('process', [('dbopen origin', substr)] )
+        if rec:
             db = curs.fetchone()
-            for mtype in ('ml', 'mb', 'ms'):
-                if db.get(mtype):
-                    mags.append(self._map_origin2magnitude(db, mtype=mtype))
+            mags += [self._map_origin2magnitude(db, mtype=mtype) 
+                     for mtype in ('ml', 'mb', 'ms') if db.get(mtype)]
         return mags
 
     def get_phases(self, orid=None):
