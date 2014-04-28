@@ -9,54 +9,57 @@ from obspy.core.event import (UTCDateTime, Event, CreationInfo, Magnitude,
 from nsl.converters.db2quakemlconverter import DBToQuakemlConverter
 from nsl.converters.ichinose import mt2event
 
-
-def custom_rid(cls, obj, authority=None):
-    """
-    Return a resource identifier for quakeml (for NSL)
+class CustomRIDFunction(object):
+    """NSL custom function for making ResourceIdentifier objects"""
+    authority = "local"
     
-    Inputs
-    ------
-    obj : str or obspy.core.event class instance
-    authority : string of an auth_id, e.g. 'nn.anss.org'
-
-    Returns
-    -------
-    obspy.core.event.ResourceIdentifier with 'resource_id' of:
-
-    if obj:
-    is an Event 
-        => use the URL provided and tack on EVID
-    is an event object (like a Pick, MomentTensor, etc)
-        => id is "quakeml:<tag>/<ClassName>/<creation_info.version>
-    is a string
-        => append the string to "quakeml:<tag>/"
-    
-
-    NOTES: Currently, a Magnitude is a special case, if there is no
-    magid, a Magnitude will get the orid as its version, which must
-    be combined with the magnitude type to produce a unique id.
-    
-    """
-    # QuakemlConverter contains ID on class creation
-    if authority is None:
-        authority = cls.auth_id
-    # Build up a list of strings to join for a valid RID string
-    if isinstance(obj, str):
-        l = ['quakeml:' + authority, obj]
-    elif isinstance(obj, Event):
-        evid = obj.creation_info.version
-        l = ['quakeml:'+ authority, 'Events/main.php?evid=' + evid]
-    else:
-        prefix = 'quakeml:'+ authority
-        name   = obj.__class__.__name__
-        id_num = obj.creation_info.version
-        l = [prefix, name, id_num]
-    # In case of multiple magnitudes, make Mag unique with type
-    if isinstance(obj, Magnitude):
-        l.insert(2, obj.magnitude_type)
+    def __call__(self, obj, authority=None):
+        """
+        Return a resource identifier for quakeml (for NSL)
         
-    ridstr = '/'.join(l)
-    return ResourceIdentifier(ridstr)
+        Inputs
+        ------
+        obj : str or obspy.core.event class instance
+        authority : string of an auth_id, e.g. 'nn.anss.org'
+
+        Returns
+        -------
+        obspy.core.event.ResourceIdentifier with 'resource_id' of:
+
+        if obj:
+        is an Event 
+            => use the URL provided and tack on EVID
+        is an event object (like a Pick, MomentTensor, etc)
+            => id is "quakeml:<tag>/<ClassName>/<creation_info.version>
+        is a string
+            => append the string to "quakeml:<tag>/"
+        
+
+        NOTES: Currently, a Magnitude is a special case, if there is no
+        magid, a Magnitude will get the orid as its version, which must
+        be combined with the magnitude type to produce a unique id.
+        
+        """
+        # QuakemlConverter contains ID on class creation
+        if authority is None:
+            authority = self.authority
+        # Build up a list of strings to join for a valid RID string
+        if isinstance(obj, str):
+            l = ['quakeml:' + authority, obj]
+        elif isinstance(obj, Event):
+            evid = obj.creation_info.version
+            l = ['quakeml:'+ authority, 'Events/main.php?evid=' + evid]
+        else:
+            prefix = 'quakeml:'+ authority
+            name   = obj.__class__.__name__
+            id_num = obj.creation_info.version
+            l = [prefix, name, id_num]
+        # In case of multiple magnitudes, make Mag unique with type
+        if isinstance(obj, Magnitude):
+            l.insert(2, obj.magnitude_type)
+            
+        ridstr = '/'.join(l)
+        return ResourceIdentifier(ridstr)
 
 
 class Converter(DBToQuakemlConverter):
@@ -71,7 +74,7 @@ class Converter(DBToQuakemlConverter):
     of it...
 
     """
-    rid_factory = classmethod(custom_rid)
+    rid_factory = CustomRIDFunction()
 
     def build(self, evid=None, orid=None, delete=False, phase_data=False, focal_data=False, mt=None):
         """
@@ -102,7 +105,8 @@ class Converter(DBToQuakemlConverter):
             self.event.resource_id = self._rid(self.event)
         elif mt:
         # 2. Make a custom event (mt is a special-formatted text file)
-            self.event = mt2event(mt, quakeml_rid=self.rid_factory)
+            _RIDFactory = type('RIDFactory', (CustomRIDFunction,), {'authority': self.auth_id})
+            self.event = mt2event(mt, quakeml_rid=_RIDFactory())
         # 3. Use EventBuilder to get Event from the db
         else:
             self._build(orid=orid, phases=phase_data, focals=focal_data, event_type="not reported")
