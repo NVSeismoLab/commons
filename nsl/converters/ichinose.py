@@ -293,13 +293,13 @@ class IchinoseToEventConverter(object):
         origin.creation_info = creation_info.copy()
          # Unique from true origin ID
         _oid = self._rid(origin)
-        origin.resource_id = ResourceIdentifier(_oid.resource_id + '/mt')
+        origin.resource_id = ResourceIdentifier(str(_oid) + '/mt')
         del _oid
         # Make an id for the MT that references this origin
-        ogid = origin.resource_id.resource_id
+        ogid = str(origin.resource_id)
         doid = ResourceIdentifier(ogid, referred_object=origin)
         # Make an id for the moment tensor mag which references this mag
-        mrid = magnitude.resource_id.resource_id
+        mrid = str(magnitude.resource_id)
         mmid = ResourceIdentifier(mrid, referred_object=magnitude)
         # MT todo: could check/use URL for RID if parsing the php file
         moment_tensor.evaluation_mode = ev_mode
@@ -321,8 +321,8 @@ class IchinoseToEventConverter(object):
         event.origins = [origin]
         event.creation_info = creation_info.copy()
         # If an MT was done, that's the preferred mag/mech
-        event.preferred_magnitude_id = magnitude.resource_id.resource_id
-        event.preferred_focal_mechanism_id = focal_mech.resource_id.resource_id
+        event.preferred_magnitude_id = str(magnitude.resource_id)
+        event.preferred_focal_mechanism_id = str(focal_mech.resource_id)
         if evid:
             event.creation_info.version = evid
         event.resource_id = self._rid(event)
@@ -340,7 +340,7 @@ def mt2event(filehandle, quakeml_rid=None):
     """
     return IchinoseToEventConverter(filehandle, rid_factory=quakeml_rid).get_event()
 
-def mt2event_old(filehandle, quakeml_rid=rid):
+def mt2event_old(filehandle, quakeml_rid=None):
     '''Build an obspy moment tensor focal mech event
 
     This makes the tensor output into an Event containing:
