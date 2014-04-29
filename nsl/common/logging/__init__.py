@@ -50,11 +50,11 @@ def customConfig(name='root', handlers=['null'], level=DEFAULT_LOG_LEVEL):
         }
 
 
-def customLogger(name='root', handlers=['null']):
+def customLogger(name='root', handlers=['null'], level=DEFAULT_LOG_LEVEL):
     """
     Return custom logger built with customConfig function
     """
-    dictConfig(customConfig(name, handlers))
+    dictConfig(customConfig(name, handlers, level))
     return getLogger(name)
 
 
