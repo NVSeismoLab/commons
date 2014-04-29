@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-nsl.common.log
+nsl.common.logging
+
+Contains python logging module plus some default 
+variables, functions and classes for logging.
 """
-import logging
+from logging import *
 
 
-DEFAULT_LOG_LEVEL = logging.INFO
+DEFAULT_LOG_LEVEL = INFO
 DEFAULT_LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
 
-def log_to_stream(logger, stream=None, level=None, formatting=None):
+def add_logstream(logger, stream=None, level=None, formatting=None):
     """
     Add a StreamHandler to a logger (default=stderr)
+
+    Return stream for access
     """
     if level is None:
         level = DEFAULT_LOG_LEVEL
@@ -19,11 +24,11 @@ def log_to_stream(logger, stream=None, level=None, formatting=None):
         formatting = DEFAULT_LOG_FORMAT
     if logger.level < level:
         logger.setLevel(level)
-    hnd = logging.StreamHandler(stream=stream)
+    hnd = StreamHandler(stream=stream)
     hnd.setLevel(level)
-    hnd.setFormatter(logging.Formatter(formatting))
+    hnd.setFormatter(Formatter(formatting))
     logger.addHandler(hnd)
-    return logger
+    return stream
 
 
 class ModuleLogger(object):
@@ -34,19 +39,21 @@ class ModuleLogger(object):
         """
         if name is None:
             name = __name__
-        logger = logging.getLogger(name)
+        logger = getLogger(name)
         try:
-            logger.addHander(logging.NullHandler)
+            logger.addHander(NullHandler)
         except:
-            logging.raiseExceptions = False
+            raiseExceptions = False
         return logger
 
     @classmethod
     def to_stream(cls, name=None, stream=None, level=None, formatting=None):
         """
+        Simple class constructor to log to a stream
         """
         logger = cls(name)
-        return log_to_stream(logger, stream, level, formatting)
+        st = log_to_stream(logger, stream, level, formatting)
+        return logger
 
 
 class LoggedType(type):
