@@ -17,7 +17,7 @@ DEFAULT_LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
 def customConfig(name='root', handlers=['null'], level=DEFAULT_LOG_LEVEL):
     """
-    Return a dict for loggning.config.dictConfig
+    Return a dict for logging.config.dictConfig
     
     name: str of logger name to add
     handlers: list of: 'null' -> NullHandler
@@ -54,6 +54,8 @@ def customLogger(name='root', handlers=['null'], level=DEFAULT_LOG_LEVEL):
     """
     Return custom logger built with customConfig function
     """
+    #TODO: make backwards compat with 2.6
+    # (parse config manually and add stuff to logger)
     dictConfig(customConfig(name, handlers, level))
     return getLogger(name)
 
