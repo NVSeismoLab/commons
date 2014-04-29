@@ -15,13 +15,13 @@ DEFAULT_LOG_LEVEL = INFO
 DEFAULT_LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
 
-def customConfig(name='root', handlers=['api'], level=DEFAULT_LOG_LEVEL):
+def customConfig(name='root', handlers=['null'], level=DEFAULT_LOG_LEVEL):
     """
     Return a dict for loggning.config.dictConfig
     
     name: str of logger name to add
-    handlers: list of: 'api' -> NullHandler
-                       'console' -> stderr
+    handlers: list of: 'null' -> NullHandler
+                       'stderr' -> StreamHandler:stderr
     """
     return {
         'version': 1,
@@ -31,10 +31,10 @@ def customConfig(name='root', handlers=['api'], level=DEFAULT_LOG_LEVEL):
                 },
             },
         'handlers' : { 
-            'api': {
+            'null': {
                 'class': 'logging.NullHandler'
                 },
-            'console' : {
+            'stderr' : {
                 'class': 'logging.StreamHandler',
                 'formatter': 'default',
                 'level': level,
@@ -50,7 +50,7 @@ def customConfig(name='root', handlers=['api'], level=DEFAULT_LOG_LEVEL):
         }
 
 
-def customLogger(name='root', handlers=['api']):
+def customLogger(name='root', handlers=['null']):
     """
     Return custom logger built with customConfig function
     """
