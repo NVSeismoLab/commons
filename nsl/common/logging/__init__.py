@@ -6,53 +6,71 @@ Contains python logging module plus some default
 variables, functions and classes for logging.
 """
 from logging import *
-
+try:
+    from logging.config import dictConfig
+except ImportError:
+    pass
 
 DEFAULT_LOG_LEVEL = INFO
 DEFAULT_LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
 
-def add_logstream(logger, stream=None, level=None, formatting=None):
+def customConfig(name='root', handlers=['api'], level=DEFAULT_LOG_LEVEL):
     """
-    Add a StreamHandler to a logger (default=stderr)
-
-    Return stream for access
+    Return a dict for loggning.config.dictConfig
+    
+    name: str of logger name to add
+    handlers: list of: 'api' -> NullHandler
+                       'console' -> stderr
     """
-    if level is None:
-        level = DEFAULT_LOG_LEVEL
-    if formatting is None:
-        formatting = DEFAULT_LOG_FORMAT
-    if logger.level < level:
-        logger.setLevel(level)
-    hnd = StreamHandler(stream=stream)
-    hnd.setLevel(level)
-    hnd.setFormatter(Formatter(formatting))
-    logger.addHandler(hnd)
-    return stream
+    return {
+        'version': 1,
+        'formatters': { 
+            'default': {
+                'format': DEFAULT_LOG_FORMAT
+                },
+            },
+        'handlers' : { 
+            'api': {
+                'class': 'logging.NullHandler'
+                },
+            'console' : {
+                'class': 'logging.StreamHandler',
+                'formatter': 'default',
+                'level': level,
+                },
+            },
+        'loggers': {
+            name : {
+                'level': level,
+                'handlers': handlers,
+                },
+            },
+        'disable_existing_loggers': False,
+        }
 
 
-class ModuleLogger(object):
+def customLogger(name='root', handlers=['api']):
+    """
+    Return custom logger built with customConfig function
+    """
+    dictConfig(customConfig(name, handlers))
+    return getLogger(name)
+
+
+#--- Python 2.6 compat -----------------------------------------------#
+class NullLogger(object):
     def __new__(cls, name=None):
         """
         Get a generic logger with a NullHander/disabled
         (Used for logging in API/module, or a base generic logger)
         """
-        if name is None:
-            name = __name__
         logger = getLogger(name)
-        try:
-            logger.addHander(NullHandler)
-        except:
-            raiseExceptions = False
-        return logger
-
-    @classmethod
-    def to_stream(cls, name=None, stream=None, level=None, formatting=None):
-        """
-        Simple class constructor to log to a stream
-        """
-        logger = cls(name)
-        st = log_to_stream(logger, stream, level, formatting)
+        if not logger.handlers:
+            try:
+                logger.addHander(NullHandler)
+            except:
+                raiseExceptions = False
         return logger
 
 
@@ -61,6 +79,6 @@ class LoggedType(type):
     Metaclass, adds an initialized logger instance
     """
     def __new__(cls, name, bases, dict_):
-        dict_['logger'] = ModuleLogger(name)
+        dict_['logger'] = NullLogger(name)
         return super(LoggedType, cls).__new__(type, name, bases, dict_)
         
