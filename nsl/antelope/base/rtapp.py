@@ -17,19 +17,15 @@ This is a simple class for writing RTapps in python.
 """
 import sys
 import time
-#import datetime
-import logging
+
 from antelope.orb import Orb
+
+import nsl.common.logging as logging
 from nsl.antelope.pf import get_pf
 from nsl.antelope.packets import Pkt
 
-# Set up logger for debug and real-time
-LOG = logging.getLogger(__name__)
-DEFAULT_LOG_LEVEL = logging.DEBUG
-try:
-    LOG.addHandler(logging.NullHandler())
-except:
-    logging.raiseExceptions = False
+
+LOG = logging.customLogger(__name__)
 
 
 def _rt_print(packet_tuple):
@@ -42,30 +38,6 @@ def _rt_print(packet_tuple):
     '''
     print(packet_tuple)
     return 0
-
-
-def _add_stderr_log(logger=LOG, level=DEFAULT_LOG_LEVEL):
-    """
-    Setup a STDERR Handler for a given Logger.
-
-    Inputs
-    ------
-    logger : logging.Logger instance
-    level : string of valid logging level ('DEBUG')
-
-    -> contains one handler to log to stderr stream
-    -> Stream handler logging level specified by 'level'
-
-    """
-    # create console handler and set level
-    ch = logging.StreamHandler()  # default stream=sys.stderr
-    ch.setLevel(level)
-    logfmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    formatter = logging.Formatter(logfmt)
-    # add formatter to ch
-    ch.setFormatter(formatter)
-    # add ch to logger
-    logger.addHandler(ch)
 
 
 class Rtapp(object):
@@ -103,34 +75,10 @@ class Rtapp(object):
     orb = None
     orbname = None
     logger = LOG
-    enable_log = False
-    log_level = DEFAULT_LOG_LEVEL
 
     filter_expressions = None
 
-    @classmethod
-    def enable_logging(cls, level=logging.DEBUG):
-        cls.logger.setLevel(level)
-
-    @classmethod
-    def disable_logging(cls):
-        cls.logger.setLevel(logging.NOTSET)
-
-    @classmethod
-    def log_to_stderr(cls, level=None):
-        """
-        Convenience method to add a handler to log to STDERR.
-
-        NOTE
-        ====
-        Logging must be enabled in constructor for messages to get sent!
-
-        """
-        if level is None:
-            level = cls.log_level
-        _add_stderr_log(logger=cls.logger, level=level)
-
-    def __init__(self, orbname=None, enable_log=False):
+    def __init__(self, orbname=None):
         """
         Constructor for rtapp process stub
 
@@ -144,8 +92,6 @@ class Rtapp(object):
         # Check for None so these could be set at class level
         if orbname is not None:
             self.orbname = orbname
-        if enable_log:
-            self.enable_logging()
 
     def _open(self, orbname=None):
         """
@@ -219,7 +165,7 @@ class Rtapp(object):
         self.orb.put(pktsrcname, pkttime, pkt, nbytes)
         self.logger.info("Wrote packet to orb: {0}".format(pktsrcname))
 
-    def run(self, enable_log=None):
+    def start(self):
         """
         Reap the orb and process the resulting tuple packet
 
@@ -229,17 +175,6 @@ class Rtapp(object):
         4) put any packets returned from 'process' into ORB
 
         """
-        if enable_log is True:
-            # Turn on logging
-            # Must add a handler to see these messages!!!
-            self.enable_logging()
-        elif enable_log is False:
-            # Explicitly turn off
-            self.disable_logging()
-        else:
-            # Keep whatever logging was previously set up.
-            pass
-
         # Startup
         self.logger.info("STARTING {0}, CONNECTING TO {1}... ".format(
             self.__class__.__name__, self.orbname))
@@ -275,17 +210,19 @@ class Rtapp(object):
         """
         Main function to run as a script
         """
+        # Change logger to class name, logging to stderr
+        cls.logger = logging.customLogger(cls.__name__, ['stderr'])
+        # Prefer command line orb, else see if you have one in a pf
         if len(sys.argv) > 1:
             ORB = sys.argv[1]
         else:
             pf = get_pf(cls._pffilename)
             ORB = pf.get('ORB')
-
-        rt = cls(orbname=ORB, enable_log=True)
-        rt.log_to_stderr()
+        # Instantiate and run forever
+        rtapp = cls(orbname=ORB)
         try:
-            rt.run()
+            rtapp.start()
         except Exception as e:
-            rt.logger.exception(e)
-            rt.logger.critical("Uncaught exception, exiting...")
+            rtapp.logger.exception(e)
+            rtapp.logger.critical("Uncaught exception, exiting...")
             sys.exit(1)
