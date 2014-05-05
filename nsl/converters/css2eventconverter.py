@@ -282,10 +282,11 @@ class CSSToEventConverter(object):
             origin.time_errors = {'uncertainty': time_u}
 
         #-- Analyst-determined Status -------------------------------
-        if 'orbassoc' in _str(db.get('auth')):
-            origin.evaluation_mode = "automatic"
-            origin.evaluation_status = "preliminary"
-        else:
+        posted_author = _str(db.get('auth'))
+        
+        origin.evaluation_mode = "automatic"
+        origin.evaluation_status = "preliminary"
+        if posted_author and 'orbassoc' not in posted_author:
             origin.evaluation_mode = "manual"
             origin.evaluation_status = "reviewed"
         # Save etype per origin due to schema differences...
@@ -293,7 +294,7 @@ class CSSToEventConverter(object):
         # Compatible with future patch rename "_namespace" -> "namespace"
         origin.extra['etype'] = {
             'value': css_etype, 
-            '_namespace': CSS_NAMESPACE,
+            '_namespace': CSS_NAMESPACE,  # TBDepricated, remove
             'namespace': CSS_NAMESPACE
             }
 
