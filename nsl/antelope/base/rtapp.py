@@ -21,6 +21,7 @@ import time
 from antelope.orb import Orb
 
 import nsl.common.logging as logging
+from nsl import __version__ as nsl_version
 from nsl.antelope.pf import get_pf
 from nsl.antelope.packets import Pkt
 
@@ -176,8 +177,8 @@ class Rtapp(object):
 
         """
         # Startup
-        self.logger.info("STARTING {0}, CONNECTING TO {1}... ".format(
-            self.__class__.__name__, self.orbname))
+        self.logger.info("STARTING, nsl.common Version {0}, CONNECTING TO {1}... ".format(
+            nsl_version, self.orbname))
 
         # Open orb connection
         self._open()
