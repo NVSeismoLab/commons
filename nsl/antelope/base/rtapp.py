@@ -25,24 +25,24 @@ from nsl import __version__ as nsl_version
 from nsl.antelope.pf import get_pf
 from nsl.antelope.packets import Pkt
 
-
+# Default null logger for module
 LOG = logging.customLogger(__name__)
 
 
 def _rt_print(packet_tuple):
-    '''
+    """
     Default example of an rt_app function
 
     Inputs: packet tuple from orbreap
     ** Prints tuple contents **
     Returns: success code
-    '''
+    """
     print(packet_tuple)
     return 0
 
 
 class Rtapp(object):
-    '''
+    """
     Base rtapps class
 
     This is a Base which should be inherited.
@@ -70,13 +70,13 @@ class Rtapp(object):
               -> checking packet sourcename against 'filter_expressions'
               -> passing packet tuple to 'process' method
 
-    '''
-    __version__ = '1.0.0-generic'
+    """
+    __version__ = 'generic'
     _pffilename = 'rtapp'
+
     orb = None
     orbname = None
     logger = LOG
-
     filter_expressions = None
 
     def __init__(self, orbname=None):
@@ -193,8 +193,6 @@ class Rtapp(object):
             p = self.orb.reap()
             # Check packets for -1, means the Orb has been restarted
             self._orbcheck(p)
-
-            time.sleep(0.5)  # wait half a sec for a KeyboardInterrupt
             if self.filter_packet(p):
                 try:
                     reply = self.process(p)
