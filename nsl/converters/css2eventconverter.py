@@ -232,11 +232,6 @@ class CSSToEventConverter(object):
         origin.longitude = db.get('lon')
         origin.depth = _km2m(db.get('depth'))
         origin.time = _utc(db.get('time'))
-        origin.creation_info = CreationInfo(
-            creation_time = _utc(db.get('lddate')),
-            agency_id = self.agency, 
-            version = db.get('orid'),
-            )
         origin.extra = {}
         
         #-- Quality -------------------------------------------------
@@ -298,6 +293,12 @@ class CSSToEventConverter(object):
             'namespace': CSS_NAMESPACE
             }
 
+        origin.creation_info = CreationInfo(
+            creation_time = _utc(db.get('lddate')),
+            agency_id = self.agency, 
+            version = db.get('orid'),
+            author = posted_author,
+            )
         origin.resource_id = self._rid(origin)
         return origin
 
