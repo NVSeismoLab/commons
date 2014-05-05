@@ -4,7 +4,7 @@
 from setuptools import setup
 
 s_args = {'name': 'nsl.common',
-          'version': '0.10.1',
+          'version': '0.10.3',
           'description': 'NSL Common libraries and utilities for Python',
           'author': 'Nevada Seismological Lab',
           'url': 'https//github.com/NVSeismoLab',
@@ -15,6 +15,7 @@ s_args = {'name': 'nsl.common',
                        'nsl.antelope.base',
                        'nsl.antelope.packets',
                        'nsl.antelope.rows',
+                       'nsl.antelope.util',
                        'nsl.converters', 
                        'nsl.obspy',
                        'nsl.obspy.patches',
