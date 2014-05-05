@@ -68,7 +68,10 @@ def plot_stream_recsec(st, time_offset=T_PRE, trace_distance=2):
         tr.data /= numpy.amax(numpy.abs(tr.data))
         if chan[0] in ('B', 'H', 'D'):
             tr.filter('highpass', freq=1.0)
-            tr.taper(max_percentage=0.05, type='cosine')
+            try:
+                tr.taper(max_percentage=0.05, type='cosine')
+            except:
+                tr.taper()  # depricated, but needed for now
         ypos = trace_distance * n
         tr.data += ypos
         ytics.append(ypos)
