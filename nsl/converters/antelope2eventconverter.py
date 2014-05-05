@@ -54,11 +54,12 @@ class AntelopeToEventConverter(CSSToEventConverter):
     database data.
     
     """
-    connection = None  # DBAPI2 database connection
+    automatic_authors = ['orbassoc', 'orbmag']
     
+    connection = None  # DBAPI2 database connection
     place_db = None  # for looking up nearest places
     emap = {}  # for adding custom etypes
-    
+
     @classmethod
     def load_pf(cls, pfname='db2quakeml'):
         try:

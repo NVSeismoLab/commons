@@ -112,6 +112,7 @@ class CSSToEventConverter(object):
     
     auth_id = 'local' # publicID, authority URL
     agency  = 'XX'    # agency ID, ususally net code
+    automatic_authors = []  # list of authors to mark as automatic
 
     @staticmethod 
     def get_event_type(etype, etype_map=None):
@@ -176,6 +177,19 @@ class CSSToEventConverter(object):
         else:
             return None
     
+    def get_event_status(self, posted_author):
+        """
+        Return mode and status based on author
+        """
+        for auto_author in self.automatic_authors:
+            if not posted_author or auto_author in posted_author:
+                mode = "automatic"
+                status = "preliminary"
+                return mode, status
+        mode = "manual"
+        status = "reviewed"
+        return mode, status
+
     def __init__(self, *args, **kwargs):
         """
         Set event
@@ -278,12 +292,10 @@ class CSSToEventConverter(object):
 
         #-- Analyst-determined Status -------------------------------
         posted_author = _str(db.get('auth'))
+        mode, status = self.get_event_status(posted_author)
+        origin.evaluation_mode = mode
+        origin.evaluation_status = status
         
-        origin.evaluation_mode = "automatic"
-        origin.evaluation_status = "preliminary"
-        if posted_author and 'orbassoc' not in posted_author:
-            origin.evaluation_mode = "manual"
-            origin.evaluation_status = "reviewed"
         # Save etype per origin due to schema differences...
         css_etype = _str(db.get('etype'))
         # Compatible with future patch rename "_namespace" -> "namespace"

@@ -12,7 +12,7 @@ from nsl.converters.ichinose import mt2event
 class CustomRIDFunction(object):
     """NSL custom function for making ResourceIdentifier objects"""
     authority = "local"
-    
+
     def __call__(self, obj, authority=None):
         """
         Return a resource identifier for quakeml (for NSL)
@@ -75,6 +75,7 @@ class Converter(DBToQuakemlConverter):
 
     """
     rid_factory = CustomRIDFunction()
+    automatic_authors = ['orbassoc', 'orbmag', 'HYPOI:rt']
 
     def build(self, evid=None, orid=None, delete=False, phase_data=False, focal_data=False, mt=None):
         """
