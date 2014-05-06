@@ -2,5 +2,5 @@
 """
 Common python libraries for NSL
 """
-__version__ = '0.10.4'
+__version__ = '0.10.5'
 
