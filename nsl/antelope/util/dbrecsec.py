@@ -45,8 +45,8 @@ def db2stream(dbname, orid, t_pre=T_PRE, t_post=T_POST):
             t0 = obspy.core.UTCDateTime(c['time']-t_pre)
             t1 = obspy.core.UTCDateTime(c['time']+t_post)
             _st = obspy.core.read(fpath, starttime=t0, endtime=t1)
-            if len(st) > 1:
-                _st = _st.merge()
+            if len(_st) > 1:
+                _st.merge()
             st += _st
     return st
 
