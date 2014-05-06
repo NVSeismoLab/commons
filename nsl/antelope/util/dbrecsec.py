@@ -39,11 +39,15 @@ def db2stream(dbname, orid, t_pre=T_PRE, t_post=T_POST):
     with dbapi2.connect(dbname) as conn:
         curs = conn.cursor(CONVERT_NULL=True, row_factory=dbapi2.OrderedDictRow)
         nrecs = curs.execute(*DBPROCESS_CMDS)
+        LOG.debug('Number of picks/waveforms: {0}'.format(nrecs))
         for c in curs:
             fpath = os.path.join(dbpath, c['dir'], c['dfile'])
             t0 = obspy.core.UTCDateTime(c['time']-t_pre)
             t1 = obspy.core.UTCDateTime(c['time']+t_post)
-            st += obspy.core.read(fpath, starttime=t0, endtime=t1)
+            _st = obspy.core.read(fpath, starttime=t0, endtime=t1)
+            if len(st) > 1:
+                _st = _st.merge()
+            st += _st
     return st
 
 
