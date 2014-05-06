@@ -30,6 +30,7 @@ def db2stream(dbname, orid, t_pre=T_PRE, t_post=T_POST):
                       'dbsubset iphase=~/P.*/',
                       'dbjoin wfdisc sta chan',
                       'dbsubset arrival.time <= wfdisc.endtime && arrival.time >= wfdisc.time',
+                      'dbgroup sta chan time delta dir dfile',
                       'dbsort -r delta',
                       )])
     
