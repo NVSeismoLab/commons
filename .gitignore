@@ -2,3 +2,4 @@
 tests
 build
 *.egg-info
+RELEASE-VERSION

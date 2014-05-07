@@ -2,9 +2,22 @@
 # setup.py file for netops
 #
 from setuptools import setup
+# Directory of the current file in the (hopefully) most reliable way
+# possible, according to krischer
+import sys
+import os
+import inspect
+SETUP_DIRECTORY = os.path.dirname(os.path.abspath(inspect.getfile(
+    inspect.currentframe())))
+
+# Import the version string.
+UTIL_PATH = os.path.join(SETUP_DIRECTORY, "nsl", "util")
+sys.path.insert(0, UTIL_PATH)
+from version import get_git_version  # @UnresolvedImport
+sys.path.pop(0)
 
 s_args = {'name': 'nsl.common',
-          'version': '0.10.7',
+          'version': get_git_version(),
           'description': 'NSL Common libraries and utilities for Python',
           'author': 'Nevada Seismological Lab',
           'url': 'https//github.com/NVSeismoLab',
@@ -21,7 +34,7 @@ s_args = {'name': 'nsl.common',
                        'nsl.obspy.patches',
                        'nsl.util',
                        ],
-          'package_data': {'nsl': [] },
+          'package_data': {'nsl': ['RELEASE-VERSION'] },
 }
 
 # Go
