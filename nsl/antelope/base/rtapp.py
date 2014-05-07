@@ -18,7 +18,7 @@ This is a simple class for writing RTapps in python.
 import sys
 import time
 
-from antelope.orb import Orb
+from antelope.orb import orbopen
 
 import nsl.common.logging as logging
 from nsl import __version__ as nsl_version
@@ -101,7 +101,7 @@ class Rtapp(object):
         """
         if orbname is not None:
             self.orbname = orbname
-        self.orb = Orb(self.orbname)
+        self.orb = orbopen(self.orbname)
 
     def _restart(self):
         """
