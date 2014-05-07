@@ -335,17 +335,20 @@ class CSSToEventConverter(object):
         m = Magnitude()
         m.mag = db.get('magnitude')
         m.magnitude_type = db.get('magtype')
+        m.mag_errors = self._create_dict(db, 'uncertainty')
         m.station_count = db.get('nsta')
+        
+        posted_author = _str(db.get('auth'))
+        mode, status = self.get_event_status(posted_author)
+        m.evaluation_mode = mode
+        m.evaluation_status = status
+        
         m.creation_info = CreationInfo(
             creation_time = _utc(db.get('lddate')),
             agency_id = self.agency,
             version = db.get('magid'),
-            author = db.get('auth'),
+            author = posted_author,
             )
-        if m.creation_info.author.startswith('orb'):
-            m.evaluation_status = "preliminary"
-        else:
-            m.evaluation_status = "reviewed"
         m.resource_id = self._rid(m)
         return m
 
