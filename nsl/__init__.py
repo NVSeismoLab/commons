@@ -2,5 +2,6 @@
 """
 Common python libraries for NSL
 """
-__version__ = '0.10.7'
+from nsl.util.version import get_git_version
+__version__ = get_git_version()
 
