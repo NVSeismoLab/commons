@@ -11,7 +11,7 @@ import numpy
 import obspy.core
 from matplotlib import pyplot as plt
 
-import curds2 as dbapi2
+import curds2.dbapi2 as dbapi2
 import nsl.common.logging as logging
 
 LOG = logging.customLogger(__name__)

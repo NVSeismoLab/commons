@@ -32,7 +32,7 @@ DBToQuakemlConverter : converter class
 from obspy.core.utcdatetime import UTCDateTime
 from obspy.core.event import (Event, CreationInfo, Magnitude,
                               ResourceIdentifier)
-from nsl.obspy.patches.quakeml import Pickler
+from nsl.obspy.patches.quakeml import Pickler  # TODO: depricate (ObsPy 0.9.3+)
 from nsl.converters.antelope2eventconverter import AntelopeToEventConverter
 
 
@@ -133,14 +133,18 @@ class DBToQuakemlConverter(AntelopeToEventConverter):
         Returns : dict of obspy 'extra' format
 
         """
-        # _namespace renamed to namespace in new "extra" patch, use both for now
+        # in new "extra" patch, use both for now
+        # NOTE: Obspy 0.9.3+ should support this natively, NO PATCH!!
+        # - '_namespace' renamed to 'namespace' 
+        # - '_type renamed' to 'type'
         extra_attrib = {} 
         ns_anss = ['catalog', 'http://anss.org/xmlns/catalog/0.1'] 
         for a in kwargs:
             extra_attrib[a] = {'value': kwargs[a],
-                               'namespace': ns_anss, 
-                               '_namespace': ns_anss, 
-                               '_type': 'attribute'}
+                               '_namespace': ns_anss, # TODO: depricate
+                               '_type': 'attribute',  # TODO: depricate
+                               'namespace': ns_anss,
+                               'type': 'attribute'}
         return extra_attrib
 
     def build(self, evid=None, orid=None, delete=False, phase_data=False, focal_data=False):
