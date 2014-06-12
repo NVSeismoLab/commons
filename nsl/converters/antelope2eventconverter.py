@@ -20,7 +20,8 @@ AntelopeToEventConverter(database, perm, *args, **kwargs)
 """
 from numpy import array
 from obspy.core.util import gps2DistAzimuth
-from curds2.dbapi2 import connect, OrderedDictRow, NamedTupleRow
+from curds2.dbapi2 import connect
+from curds2.rows import OrderedDictRow, NamedTupleRow
 from nsl.common.util import azimuth2compass
 from nsl.obspy.util import add_quality_params_from_data
 from nsl.converters.css2eventconverter import CSSToEventConverter

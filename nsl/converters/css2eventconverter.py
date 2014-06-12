@@ -29,7 +29,7 @@ from obspy.core.event import (Catalog, Event, Origin, CreationInfo, Magnitude,
     ResourceIdentifier, StationMagnitudeContribution)
 
 
-CSS_NAMESPACE = ('css',"http://www.seismo.unr.edu/schema/css3.0")
+CSS_NAMESPACE = 'http://www.seismo.unr.edu/schema/css3.0'
 
 
 def _utc(timestamp):
@@ -106,6 +106,7 @@ class CSSToEventConverter(object):
     get_event_type : static class method to convert CSS origin type flag
 
     """
+    nsmap = {'css': CSS_NAMESPACE} # NS to use for extra css elements/attrib
     rid_factory = None # function(object, authority)
     
     event   = None    # event instance
@@ -157,7 +158,8 @@ class CSSToEventConverter(object):
             return cls.get_event_type(etype, etype_map=emap)
         else:
             return "not reported"
-    
+
+    # TODO: depricate, prob not needed.
     @staticmethod
     def _create_dict(dbtuple, field):
         """
@@ -301,7 +303,6 @@ class CSSToEventConverter(object):
         # Compatible with future patch rename "_namespace" -> "namespace"
         origin.extra['etype'] = {
             'value': css_etype, 
-            '_namespace': CSS_NAMESPACE,  # TBDepricated, remove
             'namespace': CSS_NAMESPACE
             }
 
@@ -482,19 +483,8 @@ class CSSToEventConverter(object):
             agency_id = self.agency,
             )
         a.extra = {}
-        timedef = _str(db.get('timedef'))
-        # Save timedef in a comment due to schema differences...
-        # TODO: DEPRICATE ---------------------------------------->>>
-        assoc_str = _str(db.get('arid')) + '-' + _str(db.get('orid'))
-        timedef_comment = Comment(
-            resource_id = ResourceIdentifier(self._prefix + "/comment/timedef/" + assoc_str),
-            text = timedef
-            )
-        a.comments = [timedef_comment]
-        #--------------------------------------------------------->>>
         a.extra['timedef'] = {
-            'value': timedef, 
-            '_namespace': CSS_NAMESPACE,
+            'value': _str(db.get('timedef')), 
             'namespace': CSS_NAMESPACE
             }
         a.resource_id = self._rid(a)

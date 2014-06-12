@@ -121,8 +121,7 @@ class DBToQuakemlConverter(AntelopeToEventConverter):
     def quakeml_filename(self, product):
         return self.event.extra['dataid']['value'] + '_' + product + '.xml'
 
-    @staticmethod
-    def extra_anss(**kwargs):
+    def extra_anss(self, **kwargs):
         """
         Create an dictionary for ANSS vars for use by event classes 'extra' attribute
         
@@ -138,11 +137,10 @@ class DBToQuakemlConverter(AntelopeToEventConverter):
         # - '_namespace' renamed to 'namespace' 
         # - '_type renamed' to 'type'
         extra_attrib = {} 
-        ns_anss = ['catalog', 'http://anss.org/xmlns/catalog/0.1'] 
+        ns_anss = 'http://anss.org/xmlns/catalog/0.1'
+        self.nsmap.update({'catalog': ns_anss})
         for a in kwargs:
             extra_attrib[a] = {'value': kwargs[a],
-                               '_namespace': ns_anss, # TODO: depricate
-                               '_type': 'attribute',  # TODO: depricate
                                'namespace': ns_anss,
                                'type': 'attribute'}
         return extra_attrib
@@ -186,8 +184,8 @@ class DBToQuakemlConverter(AntelopeToEventConverter):
         extra_attributes = self.quakeml_anss_attrib(evid)
         self.event.extra = self.extra_anss(**extra_attributes)
 
-    @staticmethod
-    def _qmls(c):
+    @classmethod
+    def _qmls(cls, c):
         """
         Writes Catalog object to QuakeML string
 
@@ -198,7 +196,7 @@ class DBToQuakemlConverter(AntelopeToEventConverter):
         Returns : str of QuakeML file contents
 
         """
-        return Pickler().dumps(c)
+        return Pickler(nsmap=cls.nsmap).dumps(c)
 
     def quakeml_str(self):
         """

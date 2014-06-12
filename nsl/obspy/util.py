@@ -7,8 +7,10 @@ Utilities for the Network Operations python package
 """
 import os
 import numpy as np
+from nsl.common.util import rget
 
 
+# TODO: depricate
 def _timedef(comments):
     """Return timedef from a list of comments"""
     for c in comments:
@@ -20,7 +22,7 @@ def add_quality_params_from_data(origin):
     """Add OriginQuality data calculated from Origin Arrival info"""
     azimuths =  {a.azimuth for a in origin.arrivals}
     distances = {a.distance for a in origin.arrivals}
-    def_azis = {a.azimuth for a in origin.arrivals if _timedef(a.comments) == 'd'}
+    def_azis = {a.azimuth for a in origin.arrivals if rget(a.extra, 'timedef', 'value') == 'd'}
     azi_a = np.array(list(azimuths))
     dist_a = np.array(list(distances))
     # Azimuthal gaps
