@@ -335,7 +335,7 @@ class CSSToEventConverter(object):
         m = Magnitude()
         m.mag = db.get('magnitude')
         m.magnitude_type = db.get('magtype')
-        m.mag_errors = self._create_dict(db, 'uncertainty')
+        m.mag_errors.uncertainty = db.get('uncertainty')
         m.station_count = db.get('nsta')
         
         posted_author = _str(db.get('auth'))
@@ -422,9 +422,9 @@ class CSSToEventConverter(object):
             location_code = db.get('loc'),
             )
         p.horizontal_slowness = db.get('slow')
-        p.horizontal_slowness_errors = self._create_dict(db, 'delslo')
+        #p.horizontal_slowness_errors = self._create_dict(db, 'delslo')
         p.backazimuth = db.get('azimuth')
-        p.backazimuth_errors = self._create_dict(db, 'delaz')
+        #p.backazimuth_errors = self._create_dict(db, 'delaz')
         
         on_qual = _str(db.get('qual')).lower()
         if 'i' in on_qual:
@@ -471,7 +471,7 @@ class CSSToEventConverter(object):
         a.azimuth = db.get('esaz')
         a.distance = db.get('delta')
         a.takeoff_angle = db.get('ema')
-        a.takeoff_angle_errors = self._create_dict(db, 'emares')
+        #a.takeoff_angle_errors = self._create_dict(db, 'emares')
         a.time_residual = db.get('timeres')
         a.horizontal_slowness_residual = db.get('slores')
         a.time_weight = db.get('wgt')
