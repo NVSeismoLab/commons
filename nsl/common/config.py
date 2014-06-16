@@ -62,25 +62,29 @@ class Configuration(dict):
         """
         Configuration from a string filename
         """
+        func = None
+        
         if filename.endswith('.yml') or kind=='YAML':
             func = get_yaml
         elif filename.endswith('.json') or kind=='JSON':
             func = get_json
         elif filename.endswith('.pf') or kind=='PF':
             from nsl.antelope.pf import get_pf
-            func = get_pf
+            c = get_pf(filename)
         else:
             raise NotImplementedError("No support for format: {0} type={1}".format(filename, kind))
 
-        with open(filename) as f:
-            c = func(f)
-            try:
-                config =  cls(**c)
-            except:
-                config = cls()
-                config.__content__ = c
-            finally:
-                return config
+        if func:
+            with open(filename) as f:
+                c = func(f)
+            
+        try:
+            config =  cls(**c)
+        except:
+            config = cls()
+            config.__content__ = c
+        finally:
+            return config
 
 # Function, just link to constructor for now
 get_config = Configuration.from_file
