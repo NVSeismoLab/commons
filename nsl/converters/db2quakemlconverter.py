@@ -36,7 +36,7 @@ from nsl.obspy.patches.quakeml import Pickler  # TODO: depricate (ObsPy 0.9.3+)
 from nsl.converters.antelope2eventconverter import AntelopeToEventConverter
 
 
-def quakeml_rid(converter, obj, authority='local'):
+def rid_function(obj, authority='local'):
     """
     ResourceIdentifier factory for making ID's for Event objects
     to produce valid QuakeML/ANSS files for USGS.
@@ -64,8 +64,6 @@ def quakeml_rid(converter, obj, authority='local'):
     be combined with the magnitude type to produce a unique id.
     
     """
-    if converter.auth_id:
-        authority = converter.auth_id
     # Build up a list of strings to join for a valid RID string
     if isinstance(obj, str):
         l = ['quakeml:' + authority, obj]
@@ -95,7 +93,7 @@ class DBToQuakemlConverter(AntelopeToEventConverter):
     quakeml_filename(self, product): Try to construct a meaningful XML filename
 
     """
-    rid_factory = quakeml_rid
+    rid_factory = rid_function
 
     def quakeml_anss_attrib(self, evid=None):
         """

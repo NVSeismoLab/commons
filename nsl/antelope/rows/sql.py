@@ -1,8 +1,8 @@
 import collections
-import curds2
+import curds2.dbapi2 as dbapi2
 from obspy.core import UTCDateTime
 
-curds2.TimestampFromTicks = UTCDateTime
+dbapi2.TimestampFromTicks = UTCDateTime
 
 class _SQLValues(object):
     @staticmethod
@@ -14,9 +14,13 @@ class _SQLValues(object):
         if value is None:
             return 'NULL'
         
-        if desc.type_code == curds2.DATETIME and isinstance(value, float):
-            value =  str(curds2.TimestampFromTicks(value))
-        
+        if desc.type_code == dbapi2.DATETIME
+            if isinstance(value, float):
+                value = str(dbapi2.TimestampFromTicks(value))
+            elif isinstance(value, UTCDateTime):
+                value = str(value)
+            #TODO: add datetimet too?
+
         if isinstance(value, str):
             return "'{0}'".format(value.replace("'","''"))
         return str(value)

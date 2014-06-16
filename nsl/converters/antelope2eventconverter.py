@@ -151,16 +151,16 @@ class AntelopeToEventConverter(CSSToEventConverter):
         if database is None:
             database = self.place_db
         try:
-            curs = connect(database).cursor(row_factory=NamedTupleRow)
+            curs = connect(database).cursor(row_factory=OrderedDictRow)
             nrecs = curs.execute.lookup(table='places')
-            stats = array([gps2DistAzimuth(latitude, longitude, r.lat, r.lon) for r in curs])
+            stats = array([gps2DistAzimuth(latitude, longitude, r['lat'], r['lon']) for r in curs])
             ind = stats.argmin(0)[0]
             minstats = stats[ind]
             curs.scroll(int(ind), 'absolute')
             minrec = curs.fetchone()
             dist, azi, backazi = minstats
             compass = azimuth2compass(backazi)
-            place_info = {'distance': dist/1000., 'direction': compass, 'city': minrec.place, 'state': minrec.state}
+            place_info = {'distance': dist/1000., 'direction': compass, 'city': minrec['place'], 'state': minrec['state']}
             curs.close()
             s = "{distance:0.1f} km {direction} of {city}, {state}".format(**place_info)
             return self._nearest_cities_description(s)

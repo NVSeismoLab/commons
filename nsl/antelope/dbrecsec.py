@@ -12,6 +12,7 @@ import obspy.core
 from matplotlib import pyplot as plt
 
 import curds2.dbapi2 as dbapi2
+from curds2.rows import OrderedDictRow
 import nsl.common.logging as logging
 
 LOG = logging.customLogger(__name__)
@@ -37,7 +38,7 @@ def db2stream(dbname, orid, t_pre=T_PRE, t_post=T_POST):
     st = obspy.core.Stream()
     dbpath = os.path.abspath(os.path.dirname(dbname))
     with dbapi2.connect(dbname) as conn:
-        curs = conn.cursor(CONVERT_NULL=True, row_factory=dbapi2.OrderedDictRow)
+        curs = conn.cursor(CONVERT_NULL=True, row_factory=OrderedDictRow)
         nrecs = curs.execute(*DBPROCESS_CMDS)
         LOG.debug('Number of picks/waveforms: {0}'.format(nrecs))
         for c in curs:

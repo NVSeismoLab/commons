@@ -16,25 +16,30 @@ sys.path.insert(0, UTIL_PATH)
 from version import get_git_version  # @UnresolvedImport
 sys.path.pop(0)
 
-s_args = {'name': 'nsl.common',
-          'version': get_git_version(),
-          'description': 'NSL Common libraries and utilities for Python',
-          'author': 'Nevada Seismological Lab',
-          'url': 'https//github.com/NVSeismoLab',
-          'packages': ['nsl',
-                       'nsl.common',
-                       'nsl.common.logging',
-                       'nsl.antelope',
-                       'nsl.antelope.base',
-                       'nsl.antelope.packets',
-                       'nsl.antelope.rows',
-                       'nsl.antelope.util',
-                       'nsl.converters', 
-                       'nsl.obspy',
-                       'nsl.obspy.patches',
-                       'nsl.util',
-                       ],
-          'package_data': {'nsl': ['RELEASE-VERSION'] },
+s_args = {
+    'name': 'nsl.common',
+    'version': get_git_version(),
+    'description': 'NSL Common libraries and utilities for Python',
+    'author': 'Nevada Seismological Lab',
+    'url': 'https//github.com/NVSeismoLab',
+    'packages': [
+        'nsl',
+        'nsl.common',
+        'nsl.common.logging',
+        'nsl.antelope',
+        'nsl.antelope.base',
+        'nsl.antelope.packets',
+        'nsl.antelope.rows',
+        'nsl.antelope.util',
+        'nsl.converters', 
+        'nsl.obspy',
+        'nsl.obspy.patches',
+        'nsl.util',
+        ],
+    'package_data': {
+        'nsl': ['RELEASE-VERSION'],
+        'nsl.antelope.packets': ['packettypes.yml'],
+        },
 }
 
 # Go

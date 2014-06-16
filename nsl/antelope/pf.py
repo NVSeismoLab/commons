@@ -9,12 +9,11 @@ Functions
 get_pf(pfname) : Return a dict containing pf file contents
 
 """
-import os
-
 try:
     from antelope import stock
 except ImportError:
     try:
+        import os
         import sys
         sys.path.append(os.path.join(os.environ['ANTELOPE'], 'data', 'python'))
         from antelope import stock

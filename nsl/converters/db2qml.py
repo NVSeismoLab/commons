@@ -12,6 +12,10 @@ from nsl.converters.ichinose import mt2event
 class CustomRIDFunction(object):
     """NSL custom function for making ResourceIdentifier objects"""
     authority = "local"
+    
+    def __init__(self, authority=None):
+        if authority:
+            self.authority = authority
 
     def __call__(self, obj, authority=None):
         """
@@ -106,8 +110,8 @@ class Converter(DBToQuakemlConverter):
             self.event.resource_id = self._rid(self.event)
         elif mt:
         # 2. Make a custom event (mt is a special-formatted text file)
-            _RIDFactory = type('RIDFactory', (CustomRIDFunction,), {'authority': self.auth_id})
-            self.event = mt2event(mt, quakeml_rid=_RIDFactory())
+            #_RIDFactory = type('RIDFactory', (CustomRIDFunction,), {'authority': self.auth_id})
+            self.event = mt2event(mt, rid_factory=CustomRIDFunction(self.auth_id))
         # 3. Use EventBuilder to get Event from the db
         else:
             self._build(orid=orid, phases=phase_data, focals=focal_data, event_type="not reported")

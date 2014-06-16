@@ -177,7 +177,7 @@ class Rtapp(object):
 
         """
         # Startup
-        self.logger.info("STARTING, nsl.common Version {0}, CONNECTING TO {1}... ".format(
+        self.logger.info("STARTING, nsl.common {0}, CONNECTING TO {1}... ".format(
             nsl_version, self.orbname))
 
         # Open orb connection
