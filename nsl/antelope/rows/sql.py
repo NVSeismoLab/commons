@@ -14,7 +14,7 @@ class _SQLValues(object):
         if value is None:
             return 'NULL'
         
-        if desc.type_code == dbapi2.DATETIME
+        if desc.type_code == dbapi2.DATETIME:
             if isinstance(value, float):
                 value = str(dbapi2.TimestampFromTicks(value))
             elif isinstance(value, UTCDateTime):
