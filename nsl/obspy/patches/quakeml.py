@@ -1497,7 +1497,8 @@ class Pickler(object):
         self._str(moment_tensor.derived_origin_id, mt_el, 'derivedOriginID')
         # optional parameter
         # Data Used
-        for sub in moment_tensor.data_used:
+        if moment_tensor.data_used:
+            sub = moment_tensor.data_used
             sub_el = etree.Element('dataUsed')
             self._str(sub.wave_type, sub_el, 'waveType')
             self._str(sub.station_count, sub_el, 'stationCount')
