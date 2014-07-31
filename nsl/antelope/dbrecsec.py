@@ -60,7 +60,9 @@ def stream2fig(st, time_offset=T_PRE, trace_distance=2):
     sp = 'black'
     x = 'green'
     color = {'B': bb, 'H': bb, 'E': sp, 'S': sp, 'default':x}
-    
+    font_size = 20
+    if len(st) > 50:
+        font_size = 12
     fig = plt.figure(figsize=(16.5, 12.75))
     ax = fig.add_subplot(111)
     ytics = []
@@ -87,7 +89,7 @@ def stream2fig(st, time_offset=T_PRE, trace_distance=2):
     ax.set_xlabel("Time from P-arrival (s)")
     ax.set_ylim(0-trace_distance, ypos+trace_distance)
     ax.set_yticks(ytics)
-    ax.set_yticklabels(yticlabels, fontsize=20, fontweight='bold')
+    ax.set_yticklabels(yticlabels, fontsize=font_size, fontweight='bold')
     ax.grid(True, axis='x')
     return fig
 
