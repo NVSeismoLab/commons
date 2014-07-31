@@ -38,7 +38,8 @@ except ImportError:
 
 
 DEFAULT_LOG_LEVEL = INFO
-DEFAULT_LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+#DEFAULT_LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+DEFAULT_LOG_FORMAT = '%(asctime)s [%(levelname)s]: %(message)s'
 
 
 def customConfig(name='root', handlers=['null'], level=DEFAULT_LOG_LEVEL):
