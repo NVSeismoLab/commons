@@ -93,7 +93,7 @@ class Parser(object):
         for l in range(n+1,n+4):
             axis = {}
             name = re.findall(r'.\-axis', self.line[l])[0][0]
-            ax_values = re.findall(r'\w+=(?:\s?\-?\d\.\d+|\d+)', self.line[l])
+            ax_values = re.findall(r'\w+=(?:\s?\-?\d+\.\d+|\d+)', self.line[l])
             for _a in ax_values:
                 key, value = _a.split('=')
                 value = float(value)
